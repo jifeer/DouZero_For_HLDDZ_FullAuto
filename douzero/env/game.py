@@ -472,6 +472,7 @@ class GameEnv(object):
 
 
 
+
 class InfoSet(object):
     """
     The game state is described as infoset, which
