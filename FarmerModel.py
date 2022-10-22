@@ -81,5 +81,6 @@ def predict(cards, type="up"):
     y = y.squeeze().item()
     return y
 
+
 if __name__ == "__main__":
-    print(predict("33334444555567", "up"))
+    print(predict("2222KKJJJTTAAAA", "up"))

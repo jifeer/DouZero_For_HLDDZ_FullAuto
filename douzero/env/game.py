@@ -147,6 +147,7 @@ class GameEnv(object):
         return False
 
     def step(self, position, action=None):
+        print(position)
         if action is None:
             action = []
         win_rate = 0
@@ -217,12 +218,19 @@ class GameEnv(object):
         if not self.game_over:
             self.get_acting_player_position()
             self.game_infoset = self.get_infoset()
-        # 返回动作和胜率,只有玩家角色会接受返回值
-        action_message = {"action": str(''.join([EnvCard2RealCard[c] for c in action])),
-                          "win_rate": float(win_rate)}
         action_list.sort(key=self.compare_action, reverse=True)
         show_action_list = [(str(''.join([EnvCard2RealCard[c] for c in action_info[0]])) if len(str(''.join([EnvCard2RealCard[c] for c in action_info[0]]))) > 0 else "Pass", str(round(float(action_info[1]), 4)))for action_info in action_list]
+
+        # 返回动作和胜率,只有玩家角色会接受返回值, 易语言目前仅接受一个返回结果，故把数据封装到一个map中
+        action_message = {"action": str(''.join([EnvCard2RealCard[c] for c in action])),
+                          "win_rate": float(win_rate),"action_list":show_action_list}
+
+        print(action_message,show_action_list)
         return action_message, show_action_list
+
+    def get_action_list(self):
+        action_message, show_action_list = self.env.step(self.user_position)
+        return action_message
 
     def get_last_move(self):
         last_move = []
@@ -456,6 +464,13 @@ class GameEnv(object):
              for pos in ['landlord', 'landlord_up', 'landlord_down']}
 
         return deepcopy(self.info_sets[self.acting_player_position])
+
+    def reset_my_hand_card(self):
+        # reset self.played_cards
+
+        #
+
+
 
 class InfoSet(object):
     """

@@ -49,6 +49,7 @@ def evaluate(landlord, landlord_up, landlord_down):
     user_position_code = int(input("请输入你的角色[0：地主上家, 1：地主, 2：地主下家]:"))
     # user_position_code = 1
     user_position = ['landlord_up', 'landlord', 'landlord_down'][user_position_code]
+    print(user_position)
     # 输入三张底牌
     three_landlord_cards_real = input("请输入三张底牌, 例如 2XD:")
     # three_landlord_cards_real = "2XD"
@@ -108,4 +109,4 @@ def evaluate(landlord, landlord_up, landlord_down):
         env.reset()
 
 if __name__ == "__main__":
-    evaluate(r"E:\DouZero\DouZero_For_HappyDouDiZhu-master/baselines/ultimate/resnet_landlord.ckpt", "./baselines/ultimate/resnet_landlord.ckpt", "./baselines/ultimate/resnet_landlord.ckpt")
+    evaluate(r"D:\e-projects\DouZero_For_HLDDZ_FullAuto\baselines/resnet/resnet_landlord.ckpt", r"D:\e-projects\DouZero_For_HLDDZ_FullAuto\baselines/resnet/resnet_landlord.ckpt", r"D:\e-projects\DouZero_For_HLDDZ_FullAuto\baselines/resnet/resnet_landlord.ckpt")

@@ -56,5 +56,7 @@ class DeepAgent:
         best_action_confidence = y_pred[best_action_index]
         action_list = [(infoset.legal_actions[i], y_pred[i]) for i in range(len(infoset.legal_actions))]
         action_list.sort(key=lambda x: x[1], reverse=True)
-        # print(best_action, best_action_confidence, y_pred)
+        print("#####best_action, best_action_confidence, y_pred####")
+        # print(best_action, best_action_confidence, y_pred,action_list)
+        print(best_action)
         return best_action, best_action_confidence, action_list

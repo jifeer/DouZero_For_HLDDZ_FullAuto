@@ -262,7 +262,7 @@ class GameHelper:
                     checkSelect = 1
             states.append(checkSelect)
         return states
-
+    #获取手牌
     def GetCards(self, image):
         st = time.time()
         imgCv = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)

@@ -115,3 +115,5 @@ def predict_by_model(cards, llc):
     else:
         return action_message["win_rate"]
 
+if __name__ == "__main__":
+    print(predict("3388KKJJJTTAAAA"))

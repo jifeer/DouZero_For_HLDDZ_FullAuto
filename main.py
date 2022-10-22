@@ -244,6 +244,7 @@ class MyPyQT_Form(QtWidgets.QWidget, Ui_Form):
             player.setStyleSheet('background-color: rgba(255, 0, 0, 0);')
         self.Players[self.user_position_code].setStyleSheet('background-color: rgba(255, 0, 0, 0.1);')
 
+        # 整副牌减去玩家手上的牌，就是其他人的手牌,再分配给另外两个角色（如何分配对AI判断没有影响）
         for i in set(AllEnvCard):
             self.other_hand_cards.extend([i] * (AllEnvCard.count(i) - self.user_hand_cards_env.count(i)))
         self.card_play_data_list.update({
@@ -263,7 +264,7 @@ class MyPyQT_Form(QtWidgets.QWidget, Ui_Form):
                       DeepAgent(self.user_position, self.card_play_model_path_dict[self.user_position])]
         # ai_players2 = [self.user_position,
         #                DeepAgent(self.user_position, self.card_play_wp_model_path[self.user_position])]
-        self.env = GameEnv(ai_players, None)
+        self.env = GameEnv(self,ai_players, None)
 
         try:
             self.start()
@@ -841,6 +842,7 @@ class MyPyQT_Form(QtWidgets.QWidget, Ui_Form):
                 cards_str = "".join([card[0] for card in cards])
                 self.initial_cards = cards_str
                 if len(cards_str) == 20:
+                    #20张牌是地主
                     # win_rate = LandlordModel.predict(cards_str)
                     win_rate = LandlordModel.predict_by_model(cards_str, llcards)
                     self.PreWinrate.setText("局前预估得分: " + str(round(win_rate, 3)))

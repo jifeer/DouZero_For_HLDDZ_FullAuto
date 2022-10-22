@@ -47,5 +47,9 @@
 *   本项目基于[DouZero](https://github.com/kwai/DouZero)  [DouZero_For_Happy_DouDiZhu](https://github.com/tianqiraf/DouZero_For_HappyDouDiZhu) 
 
 ## 其他
+解决python "No module named pip"的问题
+python 升级后导致不能使用原来的pip命令
+windows平台
+cmd中敲命令：python -m ensurepip
 
 欢迎加入QQ群交流自动化相关：565142377  密码 douzero
