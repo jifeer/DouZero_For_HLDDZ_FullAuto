@@ -17,6 +17,7 @@ def EnvToOnehot(cards):
         Onehot[:cards.count(i),i] = 1
     return Onehot
 
+
 def RealToOnehot(cards):
     RealCard2EnvCard = {'3': 0, '4': 1, '5': 2, '6': 3, '7': 4,
                         '8': 5, '9': 6, 'T': 7, 'J': 8, 'Q': 9,
@@ -85,16 +86,17 @@ net2.eval()
 if UseGPU:
     net = net.to(device)
     net2 = net2.to(device)
-if os.path.exists("./bid_weights.pkl"):
+if os.path.exists("baselines/pkl/bid_weights.pkl"):
     if torch.cuda.is_available():
-        net.load_state_dict(torch.load('./bid_weights.pkl'))
+        net.load_state_dict(torch.load('baselines/pkl/bid_weights.pkl'))
     else:
-        net.load_state_dict(torch.load('./bid_weights.pkl', map_location=torch.device("cpu")))
-if os.path.exists("./bid_weights_new.pkl"):
+        net.load_state_dict(torch.load('baselines/pkl/bid_weights.pkl', map_location=torch.device("cpu")))
+if os.path.exists("baselines/pkl/bid_weights_new.pkl"):
     if torch.cuda.is_available():
-        net2.load_state_dict(torch.load('./bid_weights_new.pkl'))
+        net2.load_state_dict(torch.load('baselines/pkl/bid_weights_new.pkl'))
     else:
-        net2.load_state_dict(torch.load('./bid_weights_new.pkl', map_location=torch.device("cpu")))
+        net2.load_state_dict(torch.load('baselines/pkl/bid_weights_new.pkl', map_location=torch.device("cpu")))
+
 
 def predict(cards):
     input = RealToOnehot(cards)
@@ -104,6 +106,7 @@ def predict(cards):
     win_rate = net(input)
     return win_rate[0].item() * 100
 
+
 def predict_score(cards):
     input = RealToOnehot(cards)
     if UseGPU:
@@ -112,6 +115,7 @@ def predict_score(cards):
     input = input.unsqueeze(0)
     result = net2(input)
     return result[0].item()
+
 
 if __name__ == "__main__":
     print(predict_score("333444569TTJJQKK2"))

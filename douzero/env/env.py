@@ -234,6 +234,7 @@ def _cards2array(list_cards):
 
 
 def _action_seq_list2array(action_seq_list, model_type="old"):
+    print(action_seq_list)
     if model_type == "general":
         position_map = {"landlord": 0, "landlord_up": 1, "landlord_down": 2}
         action_seq_array = np.ones((len(action_seq_list), 57)) * -1  # Default Value -1 for not using area
@@ -257,6 +258,7 @@ def _action_seq_list2array(action_seq_list, model_type="old"):
                 action_seq_array[row, :] = _cards2array(list_cards[1])
         action_seq_array = action_seq_array.reshape(5, 162)
     return action_seq_array
+
 
 def _process_action_seq(sequence, length=15, new_model=True):
     """

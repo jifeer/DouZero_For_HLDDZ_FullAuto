@@ -22,6 +22,7 @@ bombs = [[3, 3, 3, 3], [4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6],
          [11, 11, 11, 11], [12, 12, 12, 12], [13, 13, 13, 13], [14, 14, 14, 14],
          [17, 17, 17, 17], [20, 30]]
 
+
 class GameEnv(object):
 
     def __init__(self, players, players2=None):
@@ -72,7 +73,6 @@ class GameEnv(object):
                                'landlord_down': 1}
         self.step_count = 0
 
-
     def card_play_init(self, card_play_data):
         self.info_sets['landlord'].player_hand_cards = \
             card_play_data['landlord']
@@ -83,7 +83,6 @@ class GameEnv(object):
         self.three_landlord_cards = card_play_data['three_landlord_cards']
         self.get_acting_player_position()
         self.game_infoset = self.get_infoset()
-
 
     def game_done(self):
         if len(self.info_sets['landlord'].player_hand_cards) == 0 or \
@@ -141,7 +140,7 @@ class GameEnv(object):
     def have_bomb(cards):
         if 20 in cards and 30 in cards:
             return True
-        for i in [3,4,5,6,7,8,9,10,11,12,13,14,17]:
+        for i in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17]:
             if cards.count(i) == 4:
                 return True
         return False
@@ -189,8 +188,6 @@ class GameEnv(object):
                                 print("检测到可直接出完路径:", self.action_to_str(action), "->", self.path_to_str(path))
                                 action = path[0]
                                 win_rate = 20000
-
-
         if len(action) > 0:
             self.last_pid = self.acting_player_position
 
@@ -219,13 +216,15 @@ class GameEnv(object):
             self.get_acting_player_position()
             self.game_infoset = self.get_infoset()
         action_list.sort(key=self.compare_action, reverse=True)
-        show_action_list = [(str(''.join([EnvCard2RealCard[c] for c in action_info[0]])) if len(str(''.join([EnvCard2RealCard[c] for c in action_info[0]]))) > 0 else "Pass", str(round(float(action_info[1]), 4)))for action_info in action_list]
+        show_action_list = [(str(''.join([EnvCard2RealCard[c] for c in action_info[0]])) if len(
+            str(''.join([EnvCard2RealCard[c] for c in action_info[0]]))) > 0 else "Pass",
+                             str(round(float(action_info[1]), 4))) for action_info in action_list]
 
         # 返回动作和胜率,只有玩家角色会接受返回值, 易语言目前仅接受一个返回结果，故把数据封装到一个map中
         action_message = {"action": str(''.join([EnvCard2RealCard[c] for c in action])),
-                          "win_rate": float(win_rate),"action_list":show_action_list}
+                          "win_rate": float(win_rate), "action_list": show_action_list}
 
-        print(action_message,show_action_list)
+        print(action_message, show_action_list)
         return action_message, show_action_list
 
     def get_action_list(self):
@@ -425,12 +424,12 @@ class GameEnv(object):
              for pos in ['landlord', 'landlord_up', 'landlord_down']}
 
         self.info_sets[self.acting_player_position].other_hand_cards = []
-        
+
         self.info_sets[self.acting_player_position].bid_info = np.array([
-            [1,0.5,1],
-            [1,1,1],
-            [1,1,-4],
-            [1,1,1]])
+            [1, 0.5, 1],
+            [1, 1, 1],
+            [1, 1, -4],
+            [1, 1, 1]])
 
         '''
         调整计算其他人手牌的方法，整副牌减去玩家手牌与出过的牌
@@ -449,7 +448,8 @@ class GameEnv(object):
         # 整副牌减去出过的牌和玩家手上的牌，就是其他人的手牌
         for i in set(AllEnvCard):
             self.info_sets[
-                self.acting_player_position].other_hand_cards.extend([i] * (AllEnvCard.count(i) - played_and_hand_cards.count(i)))
+                self.acting_player_position].other_hand_cards.extend(
+                [i] * (AllEnvCard.count(i) - played_and_hand_cards.count(i)))
 
         self.info_sets[self.acting_player_position].played_cards = \
             self.played_cards
@@ -465,13 +465,6 @@ class GameEnv(object):
 
         return deepcopy(self.info_sets[self.acting_player_position])
 
-    def reset_my_hand_card(self):
-        # reset self.played_cards
-
-        #
-
-
-
 
 class InfoSet(object):
     """
@@ -480,6 +473,7 @@ class InfoSet(object):
     such as the hand cards of the three players, the
     historical moves, etc.
     """
+
     def __init__(self, player_position):
         # The player position, i.e., landlord, landlord_down, or landlord_up
         self.player_position = player_position

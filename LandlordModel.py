@@ -56,11 +56,11 @@ class Net(nn.Module):
 
 net = Net()
 net.eval()
-if os.path.exists("./landlord_weights.pkl"):
+if os.path.exists("baselines/pkl/landlord_weights.pkl"):
     if torch.cuda.is_available():
-        net.load_state_dict(torch.load('./landlord_weights.pkl'))
+        net.load_state_dict(torch.load('./baselines/pkl/landlord_weights.pkl'))
     else:
-        net.load_state_dict(torch.load('./landlord_weights.pkl', map_location=torch.device("cpu")))
+        net.load_state_dict(torch.load('./baselines/pkl/landlord_weights.pkl', map_location=torch.device("cpu")))
 else:
     print("landlord_weights.pkl not found")
 

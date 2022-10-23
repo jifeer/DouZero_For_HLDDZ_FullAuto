@@ -387,3 +387,16 @@ class DouFacade(object):
             else:
                 result = {'is_farmer': is_farmer, 'result': 0, 'code': 0, 'win_rate': round(initial_bid_rate, 3)}
         return result
+
+    def reset_my_hand_card(self, user_position_code, my_hand_cards_real):
+        # reset user_hand_cards
+        user_hand_cards_env = [RealCard2EnvCard[c] for c in list(my_hand_cards_real)]
+        index = int(user_position_code)
+        user_position = ['up', 'landlord', 'down'][index]
+        self.env.info_sets[user_position].player_hand_cards = user_hand_cards_env
+        # reset played cards
+        my_played_cards = list(self.env.played_cards[user_position])
+        for exist_card in user_hand_cards_env:
+            if exist_card in my_played_cards:
+                my_played_cards.remove(exist_card)
+        return self.env.info_sets[user_position].player_hand_cards

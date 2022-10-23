@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-from flask import Flask
-from flask import request
-from flask import jsonify
+from flask import Flask, jsonify, request
+from flask_restful import Api
 import douFacade
 from douFacade import DouFacade
+# 过滤掉警示信息
+import warnings
+warnings.filterwarnings("ignore")
 
 portal = Flask(__name__)
 
@@ -194,5 +196,26 @@ def judge_if_jiabei():
     return jsonify({'code': 1, 'result': msg, 'msg': "judge_if_jiabei"})
 
 
+@portal.route('/poke/reset_hands_cards')
+def reset_hands_cards():
+    try:
+        user_position_code = request.values.get("user_position_code")
+        cards_str = request.values.get("user_hand_cards_real")
+        three_cards = request.values.get("three_landlord_cards_real")
+        ld_num = request.values.get("ld_num")
+        if ld_num in douFacadeAry:
+            dou_facade_inst = douFacadeAry[ld_num]
+        else:
+            dou_facade_inst = DouFacade()
+            douFacadeAry[ld_num] = dou_facade_inst
+
+        result = dou_facade_inst.reset_my_hand_card(user_position_code, cards_str)
+        return jsonify({'code': 0, 'result': result, 'msg': "reset_hands_cards", "ld_num": ld_num})
+    except Exception as e:
+        msg = "Error {0}".format(str(e))
+    return jsonify({'code': 1, 'result': msg, 'msg': "reset_hands_cards"})
+
+
+api = Api(portal)
 if __name__ == '__main__':
-    portal.run()
+    portal.run("127.0.0.1", 5000)

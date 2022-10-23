@@ -53,23 +53,23 @@ class Net(nn.Module):
 
 
 Nets = {"up": Net(), "down": Net(), "farmer": Net()}
-if os.path.exists("./landlord_up_weights_new.pkl"):
+if os.path.exists("baselines/pkl/landlord_up_weights_new.pkl"):
     if torch.cuda.is_available():
-        Nets["up"].load_state_dict(torch.load("./landlord_up_weights_new.pkl"))
+        Nets["up"].load_state_dict(torch.load("./baselines/pkl/landlord_up_weights_new.pkl"))
     else:
-        Nets["up"].load_state_dict(torch.load("./landlord_up_weights_new.pkl", map_location=torch.device("cpu")))
+        Nets["up"].load_state_dict(torch.load("./baselines/pkl/landlord_up_weights_new.pkl", map_location=torch.device("cpu")))
     Nets["up"].eval()
-if os.path.exists("./landlord_down_weights_new.pkl"):
+if os.path.exists("baselines/pkl/landlord_down_weights_new.pkl"):
     if torch.cuda.is_available():
-        Nets["down"].load_state_dict(torch.load("./landlord_down_weights_new.pkl"))
+        Nets["down"].load_state_dict(torch.load("./baselines/pkl/landlord_down_weights_new.pkl"))
     else:
-        Nets["down"].load_state_dict(torch.load("./landlord_down_weights_new.pkl", map_location=torch.device("cpu")))
+        Nets["down"].load_state_dict(torch.load("./baselines/pkl/landlord_down_weights_new.pkl", map_location=torch.device("cpu")))
     Nets["down"].eval()
-if os.path.exists("./farmer_weights_new.pkl"):
+if os.path.exists("baselines/pkl/farmer_weights_new.pkl"):
     if torch.cuda.is_available():
-        Nets["farmer"].load_state_dict(torch.load("./farmer_weights_new.pkl"))
+        Nets["farmer"].load_state_dict(torch.load("./baselines/pkl/farmer_weights_new.pkl"))
     else:
-        Nets["farmer"].load_state_dict(torch.load("./farmer_weights_new.pkl", map_location=torch.device("cpu")))
+        Nets["farmer"].load_state_dict(torch.load("./baselines/pkl/farmer_weights_new.pkl", map_location=torch.device("cpu")))
     Nets["farmer"].eval()
 
 

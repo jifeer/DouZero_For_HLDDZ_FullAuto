@@ -47,6 +47,8 @@
 *   本项目基于[DouZero](https://github.com/kwai/DouZero)  [DouZero_For_Happy_DouDiZhu](https://github.com/tianqiraf/DouZero_For_HappyDouDiZhu) 
 
 ## 其他
+解决速度：pip3 install xxx  -i https://pypi.tuna.tsinghua.edu.cn/simple
+
 解决python "No module named pip"的问题
 python 升级后导致不能使用原来的pip命令
 windows平台
