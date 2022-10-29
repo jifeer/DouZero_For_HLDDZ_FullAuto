@@ -1,69 +1,75 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, jsonify, request
-from flask_restful import Api
+import logging
+import traceback
+import ujson
+import uvicorn
+from fastapi import FastAPI, Request
 import douFacade
 from douFacade import DouFacade
 # 过滤掉警示信息
 import warnings
+
 warnings.filterwarnings("ignore")
 
-portal = Flask(__name__)
+portal = FastAPI()
 
 douFacadeAry = {}
 
 
-@portal.route('/')
-def hello_world():
-    return jsonify({'msg': "", 'result': "Succeed to connect AI server", 'code': 0})
+@portal.get('/')
+async def hello_world():
+    return ujson.dumps({'msg': "", 'result': "Succeed to connect AI server", 'code': 0})
 
 
-@portal.route('/manual_landlord_requirements/<cards_str>')
-def manual_landlord_requirements(cards_str):
+@portal.get('/manual_landlord_requirements/<cards_str>')
+async def manual_landlord_requirements(request: Request):
+    result = douFacade.manual_landlord_requirements(request.query_params.get('cards_str'))
 
-    result = douFacade.manual_landlord_requirements(cards_str)
-
-    return jsonify({'cards_str': cards_str, 'result': result, 'code': 0})
-
-
-@portal.route('/manual_mingpai_requirements/<cards_str>')
-def manual_mingpai_requirements(cards_str):
-    result = douFacade.manual_mingpai_requirements(cards_str)
-    return jsonify({'cards_str': cards_str, 'result': result, 'code': 0})
+    return ujson.dumps({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
 
 
-@portal.route('/poke/init_cards')
-def init_cards():
-    user_hand_cards_real = request.values.get("user_hand_cards_real")
-    three_landlord_cards_real = request.values.get("three_landlord_cards_real")
-    user_position_code = int(request.values.get("user_position_code"))
-    model_type = request.values.get("model_type")
-    ld_num = request.values.get("ld_num")
-    if ld_num in douFacadeAry:
-        dou_facade_inst = douFacadeAry[ld_num]
-    else:
+@portal.get('/manual_mingpai_requirements/<cards_str>')
+async def manual_mingpai_requirements(request: Request):
+    result = douFacade.manual_mingpai_requirements(request.query_params.get('cards_str'))
+    return ujson.dumps({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
+
+
+@portal.get('/poke/init_cards')
+async def init_cards(request: Request):
+    ld_num = request.query_params.get('ld_num')
+    print("################################ 模拟器【", ld_num, "】初始化卡牌 ")
+    try:
+        user_hand_cards_real = request.query_params.get('user_hand_cards_real')
+        three_landlord_cards_real = request.query_params.get('three_landlord_cards_real')
+        user_position_code = int(request.query_params.get('user_position_code'))
+        model_type = request.query_params.get('model_type')
         dou_facade_inst = DouFacade()
         douFacadeAry[ld_num] = dou_facade_inst
-    if user_position_code == "1":
-        # 说明玩家本人是地主
-        if three_landlord_cards_real == "":
-            three_landlord_cards_real = user_hand_cards_real[:3]
+        if user_position_code == "1":
+            # 说明玩家本人是地主
+            if three_landlord_cards_real == "":
+                three_landlord_cards_real = user_hand_cards_real[:3]
 
-    result = dou_facade_inst.init_cards(user_hand_cards_real, three_landlord_cards_real, user_position_code, model_type)
-    return jsonify({'user_position_code': user_position_code, 'result': result, 'code': 0})
+        result = dou_facade_inst.init_cards(user_hand_cards_real, three_landlord_cards_real, user_position_code,
+                                            model_type)
+        return ujson.dumps({'user_position_code': user_position_code, 'result': result, 'code': 0})
+    except Exception as e:
+        res = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {res}")
+    return ujson.dumps({'result': res, 'msg': "处理失败"})
 
 
-@portal.route('/poke/handle_others')
-def handle_others():
-    result = ""
+@portal.get('/poke/handle_others')
+async def handle_others(request: Request):
+    ld_num = request.query_params.get('ld_num')
     nick = ""
     try:
-        last_cards = request.values.get("last_cards")
-        ld_num = request.values.get("ld_num")
+        last_cards = request.query_params.get('last_cards')
         # 确定AI工作逻辑的关键参数
-        # user_position_code = request.values.get("user_position_code")
+        user_position_code = request.query_params.get('user_position_code')
         # 对于“我”来讲，上家和下家的区分
-        other_user_pos = request.values.get("other_user_pos")
-        print("################################ 模拟器【", ld_num, "】出牌人： ", other_user_pos)
+        other_user_pos = request.query_params.get('other_user_pos')
+        print("################################ 模拟器【", ld_num, "】出牌人： ", other_user_pos, " : 出牌：", last_cards)
         # 这里的“我”位置始终为0， 1是右侧玩家，2是左侧玩家
         if other_user_pos == "1":
             nick = "上家"
@@ -73,149 +79,168 @@ def handle_others():
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
-            dou_facade_inst = DouFacade()
-            douFacadeAry[ld_num] = dou_facade_inst
-        dou_facade_inst.handle_others(last_cards, nick)
-
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
+        server_current_pos = dou_facade_inst.play_order_queue.get()
+        if server_current_pos != int(other_user_pos):
+            print("!!!!!!!!!!Error: 当前应该执行的玩家是：", server_current_pos)
+        dou_facade_inst.handle_others(last_cards, nick, user_position_code, other_user_pos)
+        dou_facade_inst.play_order_queue.put(server_current_pos)
+        return ujson.dumps({'nick': nick, 'msg': "Succeed to deal with workflow", 'code': 0})
     except Exception as e:
-        res = "Error {0}".format(str(e))
-        return jsonify({'nick': nick, 'result': res, 'msg': "处理失败"})
-    return jsonify({'nick': nick, 'msg': "Succeed to deal with workflow", 'code': 0})
+        res = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {res}")
+    return ujson.dumps({'nick': nick, 'result': res, 'msg': "处理失败"})
 
 
-@portal.route('/poke/replay')
-def prepare_start():
+@portal.get('/poke/replay')
+async def prepare_start(request: Request):
+    ld_num = request.query_params.get('ld_num')
     try:
-        ld_num = request.values.get("ld_num")
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
-            dou_facade_inst = DouFacade()
-            douFacadeAry[ld_num] = dou_facade_inst
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.prepare_start()
-        return jsonify({'code': 0, 'result': result, 'request_id': "prepare_start"})
+        return ujson.dumps({'code': 0, 'result': result, 'request_id': "prepare_start"})
     except Exception as e:
-        msg = "Error {0}".format(str(e))
-        return jsonify({'code': 1, 'result': msg, 'request_id': "prepare_start"})
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return ujson.dumps({'code': 1, 'result': msg, 'request_id': "prepare_start"})
 
 
-@portal.route('/poke/play')
-def play_one_poke():
-    user_position_code = request.values.get("user_position_code")
-    # TODO：确定是否及如何更新牌
-    cards_str = request.values.get("cards_str")
-    ld_num = request.values.get("ld_num")
-    print("################################ 模拟器【", ld_num, "】出牌人： ",  "2")
-    if ld_num in douFacadeAry:
-        dou_facade_inst = douFacadeAry[ld_num]
-    else:
-        dou_facade_inst = DouFacade()
-        douFacadeAry[ld_num] = dou_facade_inst
-    result = dou_facade_inst.play_one_poke(user_position_code)
-    action = result.get("action")
-    if action == "Pass":
-        action = ""
-    return jsonify({'winRate': result.get("win_rate"), 'action': action, 'code': 0})
-
-
-@portal.route('/poke/judge_if_mingpai')
-def judge_if_mingpai():
+@portal.get('/poke/play')
+async def play_one_poke(request: Request):
+    ld_num = request.query_params.get('ld_num')
     try:
-        user_position_code = request.values.get("user_position_code")
-        cards_str = request.values.get("user_hand_cards_real")
-        three_cards = request.values.get("three_landlord_cards_real")
-        is_farmer = request.values.get("is_farmer")
-        ld_num = request.values.get("ld_num")
+        user_position_code = request.query_params.get('user_position_code')
+        desk_user_pos = request.query_params.get('other_user_pos')
+        # TODO：确定是否及如何更新牌
+        cards_str = request.query_params.get('cards_str')
+        print("################################ 模拟器【", ld_num, "】出牌人： 本人-", desk_user_pos)
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
-            dou_facade_inst = DouFacade()
-            douFacadeAry[ld_num] = dou_facade_inst
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
+
+        server_current_pos = dou_facade_inst.play_order_queue.get()
+        if server_current_pos != int(desk_user_pos):
+            print("!!!!!!!!!!Error: 当前应该执行的玩家是：", server_current_pos)
+        result = dou_facade_inst.play_one_poke(user_position_code)
+        action = result.get("action")
+        if action == "Pass":
+            action = ""
+        print("#########################################")
+        dou_facade_inst.play_order_queue.put(server_current_pos)
+        return ujson.dumps(
+            {'winRate': result.get("win_rate"), 'action': action, 'code': 0, 'hands_pokes': result.get("hands_pokes")})
+    except Exception as e:
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return ujson.dumps({'code': 1, 'result': msg, 'request_id': "play_one_poke"})
+
+
+@portal.get('/poke/judge_if_mingpai')
+async def judge_if_mingpai(request: Request):
+    ld_num = request.query_params.get('ld_num')
+    try:
+        user_position_code = request.query_params.get('user_position_code')
+        cards_str = request.query_params.get('user_hand_cards_real')
+        three_cards = request.query_params.get('three_landlord_cards_real')
+        is_farmer = request.query_params.get('is_farmer')
+        if ld_num in douFacadeAry:
+            dou_facade_inst = douFacadeAry[ld_num]
+        else:
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.judge_if_mingpai(cards_str, three_cards, user_position_code, is_farmer)
-        return jsonify({'is_farmer': is_farmer, 'result': result, 'code': 0})
+        return ujson.dumps({'is_farmer': is_farmer, 'result': result, 'code': 0})
     except Exception as e:
-        msg = "Error {0}".format(str(e))
-    return jsonify({'code': 1, 'result': msg, 'request_id': "judge_if_mingpai"})
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return ujson.dumps({'code': 1, 'result': msg, 'request_id': "judge_if_mingpai"})
 
 
-@portal.route('/poke/judge_if_jiaodizhu')
-def judge_if_jiaodizhu():
-    user_position_code = request.values.get("user_position_code")
-    cards_str = request.values.get("user_hand_cards_real")
-    jiao_dizhu_type = request.values.get("jiao_dizhu_type")
-    ld_num = request.values.get("ld_num")
-    if ld_num in douFacadeAry:
-        dou_facade_inst = douFacadeAry[ld_num]
-    else:
-        dou_facade_inst = DouFacade()
-        douFacadeAry[ld_num] = dou_facade_inst
-    result = dou_facade_inst.judge_if_jiaodizhu(cards_str, jiao_dizhu_type)
-    return jsonify({'user_position_code': user_position_code, 'result': result, 'code': 0})
-
-
-@portal.route('/poke/eval_poke_score')
-def eval_poke_score():
+@portal.get('/poke/judge_if_jiaodizhu')
+async def judge_if_jiaodizhu(request: Request):
+    ld_num = request.query_params.get('ld_num')
     try:
-        user_position_code = request.values.get("user_position_code")
-        cards_str = request.values.get("user_hand_cards_real")
-        three_cards = request.values.get("three_landlord_cards_real")
-        is_farmer = request.values.get("is_farmer")
-        jiao_dizhu_type = request.values.get("jiao_dizhu_type")
-        ld_num = request.values.get("ld_num")
+        user_position_code = request.query_params.get('user_position_code')
+        cards_str = request.query_params.get('user_hand_cards_real')
+        jiao_dizhu_type = request.query_params.get('jiao_dizhu_type')
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
-            dou_facade_inst = DouFacade()
-            douFacadeAry[ld_num] = dou_facade_inst
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
+        result = dou_facade_inst.judge_if_jiaodizhu(cards_str, jiao_dizhu_type)
+        return ujson.dumps({'user_position_code': user_position_code, 'result': result, 'code': 0})
+    except Exception as e:
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return ujson.dumps({'code': 1, 'result': msg, 'msg': "judge_if_jiaodizhu"})
+
+
+@portal.get('/poke/eval_poke_score')
+async def eval_poke_score(request: Request):
+    ld_num = request.query_params.get('ld_num')
+    try:
+        user_position_code = request.query_params.get('user_position_code')
+        cards_str = request.query_params.get('user_hand_cards_real')
+        three_cards = request.query_params.get('three_landlord_cards_real')
+        is_farmer = request.query_params.get('is_farmer')
+        jiao_dizhu_type = request.query_params.get('jiao_dizhu_type')
+        if ld_num in douFacadeAry:
+            dou_facade_inst = douFacadeAry[ld_num]
+        else:
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.eval_poke_score(cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type)
-        return jsonify({'user_position_code': user_position_code, 'win_rate': result, 'code': 0})
+        return ujson.dumps({'user_position_code': user_position_code, 'win_rate': result, 'code': 0})
     except Exception as e:
-        msg = "Error {0}".format(str(e))
-    return jsonify({'code': 1, 'result': msg, 'msg': "eval_poke_score"})
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return ujson.dumps({'code': 1, 'result': msg, 'msg': "eval_poke_score"})
 
 
-@portal.route('/poke/judge_if_jiabei')
-def judge_if_jiabei():
+@portal.get('/poke/judge_if_jiabei')
+async def judge_if_jiabei(request: Request):
+    ld_num = request.query_params.get('ld_num')
     try:
-        user_position_code = request.values.get("user_position_code")
-        cards_str = request.values.get("user_hand_cards_real")
-        three_cards = request.values.get("three_landlord_cards_real")
-        is_farmer = request.values.get("is_farmer")
-        jiao_dizhu_type = request.values.get("jiao_dizhu_type")
-        ld_num = request.values.get("ld_num")
+        user_position_code = request.query_params.get('user_position_code')
+        cards_str = request.query_params.get('user_hand_cards_real')
+        three_cards = request.query_params.get('three_landlord_cards_real')
+        is_farmer = request.query_params.get('is_farmer')
+        jiao_dizhu_type = request.query_params.get('jiao_dizhu_type')
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
-            dou_facade_inst = DouFacade()
-            douFacadeAry[ld_num] = dou_facade_inst
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
         result = dou_facade_inst.judge_if_jiabei(cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type)
-        return jsonify(result)
+        return ujson.dumps(result)
     except Exception as e:
-        msg = "Error {0}".format(str(e))
-    return jsonify({'code': 1, 'result': msg, 'msg': "judge_if_jiabei"})
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return ujson.dumps({'code': 1, 'result': msg, 'msg': "judge_if_jiabei"})
 
 
-@portal.route('/poke/reset_hands_cards')
-def reset_hands_cards():
+@portal.get('/poke/reset_hands_cards')
+async def reset_hands_cards(request: Request):
+    ld_num = request.query_params.get('ld_num')
+    print("ld_num", ld_num)
     try:
-        user_position_code = request.values.get("user_position_code")
-        cards_str = request.values.get("user_hand_cards_real")
-        three_cards = request.values.get("three_landlord_cards_real")
-        ld_num = request.values.get("ld_num")
+        user_position_code = request.query_params.get("user_position_code")
+        cards_str = request.query_params.get("user_hand_cards_real")
+        three_cards = request.query_params.get("three_landlord_cards_real")
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
-            dou_facade_inst = DouFacade()
-            douFacadeAry[ld_num] = dou_facade_inst
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
-        result = dou_facade_inst.reset_my_hand_card(user_position_code, cards_str)
-        return jsonify({'code': 0, 'result': result, 'msg': "reset_hands_cards", "ld_num": ld_num})
+        # result = dou_facade_inst.reset_my_hand_card(user_position_code, cards_str)
+        return ujson.dumps({'code': 0, 'result': 1, 'msg': "reset_hands_cards", "ld_num": ld_num})
     except Exception as e:
-        msg = "Error {0}".format(str(e))
-    return jsonify({'code': 1, 'result': msg, 'msg': "reset_hands_cards"})
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+        return ujson.dumps({'code': 1, 'result': 0, 'msg': msg})
 
 
-api = Api(portal)
 if __name__ == '__main__':
-    portal.run("127.0.0.1", 5000)
+    uvicorn.run(app='portal:portal', host="127.0.0.1", port=9000, reload=True)

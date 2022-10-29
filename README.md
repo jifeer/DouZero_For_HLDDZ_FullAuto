@@ -55,3 +55,11 @@ windows平台
 cmd中敲命令：python -m ensurepip
 
 欢迎加入QQ群交流自动化相关：565142377  密码 douzero
+
+## GPU 安装
+### nvidia 11.8
+
+1. cuda环境安装： https://blog.csdn.net/m0_45447650/article/details/123704930
+2. cudnn下载部署： cudnn-windows-x86_64-8.5.0.96_cuda11-archive
+   pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+3. 打包：pyinstaller -D -i D:\e-projects\DouZero_For_HLDDZ_FullAuto\output\favicon.ico -p D:\e-projects\DouZero_For_HLDDZ_FullAuto -n dou-zero-server  --add-data ".\baselines;.\baselines"  douFacade.py

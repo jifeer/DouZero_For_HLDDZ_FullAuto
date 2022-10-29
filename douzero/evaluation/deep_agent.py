@@ -40,9 +40,11 @@ class DeepAgent:
         # 只有一个合法动作时直接返回，这样会得不到胜率信息
         # if len(infoset.legal_actions) == 1:
         #     return infoset.legal_actions[0], 0
-
+        # print("model_type", self.model_type)
         obs = get_obs(infoset, model_type=self.model_type)
+        # 已打出牌的向量
         z_batch = torch.from_numpy(obs['z_batch']).float()
+        # 我的手牌、其他家手牌、最后打出的牌、各家已出的牌的np水平堆叠数组
         x_batch = torch.from_numpy(obs['x_batch']).float()
         if torch.cuda.is_available():
             z_batch, x_batch = z_batch.cuda(), x_batch.cuda()
@@ -53,10 +55,11 @@ class DeepAgent:
 
         best_action_index = np.argmax(y_pred, axis=0)[0]
         best_action = infoset.legal_actions[best_action_index]
+        # print(best_action)
+
         best_action_confidence = y_pred[best_action_index]
         action_list = [(infoset.legal_actions[i], y_pred[i]) for i in range(len(infoset.legal_actions))]
         action_list.sort(key=lambda x: x[1], reverse=True)
-        print("#####best_action, best_action_confidence, y_pred####")
+        # print("#####best_action, best_action_confidence, y_pred####")
         # print(best_action, best_action_confidence, y_pred,action_list)
-        print(best_action)
         return best_action, best_action_confidence, action_list

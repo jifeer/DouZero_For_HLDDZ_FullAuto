@@ -18,6 +18,7 @@ for i in range(3, 15):
 deck.extend([17 for _ in range(4)])
 deck.extend([20, 30])
 
+
 class Env:
     """
     Doudizhu multi-agent wrapper
@@ -154,6 +155,7 @@ class Env:
         """
         return self._env.game_over
 
+
 class DummyAgent(object):
     """
     Dummy agent is designed to easily interact with the
@@ -201,14 +203,19 @@ def get_obs(infoset, model_type="old"):
         else:
             raise ValueError('')
 
+
 def _get_one_hot_array(num_left_cards, max_num_cards):
     """
     A utility function to obtain one-hot endoding
     """
+    # print("num_left_cards=", num_left_cards)
+    # print("max_num_cards=", max_num_cards)
     one_hot = np.zeros(max_num_cards)
+    # print("one_hot=", one_hot)
     one_hot[num_left_cards - 1] = 1
 
     return one_hot
+
 
 def _cards2array(list_cards):
     """
@@ -234,7 +241,7 @@ def _cards2array(list_cards):
 
 
 def _action_seq_list2array(action_seq_list, model_type="old"):
-    print(action_seq_list)
+    # print("已出牌的顺序表：", action_seq_list)
     if model_type == "general":
         position_map = {"landlord": 0, "landlord_up": 1, "landlord_down": 2}
         action_seq_array = np.ones((len(action_seq_list), 57)) * -1  # Default Value -1 for not using area
@@ -256,6 +263,7 @@ def _action_seq_list2array(action_seq_list, model_type="old"):
         for row, list_cards in enumerate(action_seq_list):
             if list_cards:
                 action_seq_array[row, :] = _cards2array(list_cards[1])
+        # 转换action_seq_array成5行162列
         action_seq_array = action_seq_array.reshape(5, 162)
     return action_seq_array
 
@@ -275,6 +283,7 @@ def _process_action_seq(sequence, length=15, new_model=True):
         sequence = empty_sequence
     return sequence
 
+
 def _get_one_hot_bomb(bomb_num):
     """
     A utility function to encode the number of bombs
@@ -284,58 +293,71 @@ def _get_one_hot_bomb(bomb_num):
     one_hot[bomb_num] = 1
     return one_hot
 
+
 def _get_obs_landlord(infoset):
     """
     Obttain the landlord features. See Table 4 in
     https://arxiv.org/pdf/2106.06135.pdf
     """
+    # 手牌的可能组合数量
     num_legal_actions = len(infoset.legal_actions)
+    # 我的手牌转为np数组
     my_handcards = _cards2array(infoset.player_hand_cards)
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对myhandcard对应的np数组repeat num_legal_actions次
     my_handcards_batch = np.repeat(my_handcards[np.newaxis, :],
                                    num_legal_actions, axis=0)
-
+    # 其他人手牌转为np数组
     other_handcards = _cards2array(infoset.other_hand_cards)
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对other_handcards对应的np数组repeat num_legal_actions次
     other_handcards_batch = np.repeat(other_handcards[np.newaxis, :],
                                       num_legal_actions, axis=0)
-
+    # 最后移动的手牌转为np数组
     last_action = _cards2array(infoset.last_move)
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对last_action对应的np数组repeat num_legal_actions次
     last_action_batch = np.repeat(last_action[np.newaxis, :],
                                   num_legal_actions, axis=0)
-
+    # 这里是按照my_handcards_batch对应的np数组生成同样的数组，值都为0，然后赋值legal_actions
     my_action_batch = np.zeros(my_handcards_batch.shape)
     for j, action in enumerate(infoset.legal_actions):
         my_action_batch[j, :] = _cards2array(action)
-
+    #  landlord_up_num_cards_left的手牌转为np数组
     landlord_up_num_cards_left = _get_one_hot_array(
         infoset.num_cards_left_dict['landlord_up'], 17)
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对landlord_up_num_cards_left对应的np数组repeat num_legal_actions次
     landlord_up_num_cards_left_batch = np.repeat(
         landlord_up_num_cards_left[np.newaxis, :],
         num_legal_actions, axis=0)
 
+    #  landlord_down_num_cards_left的手牌转为np数组
     landlord_down_num_cards_left = _get_one_hot_array(
         infoset.num_cards_left_dict['landlord_down'], 17)
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对landlord_down_num_cards_left对应的np数组repeat num_legal_actions次
     landlord_down_num_cards_left_batch = np.repeat(
         landlord_down_num_cards_left[np.newaxis, :],
         num_legal_actions, axis=0)
-
+    #  landlord_up_played_cards的手牌转为np数组
     landlord_up_played_cards = _cards2array(
         infoset.played_cards['landlord_up'])
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对landlord_up_played_cards对应的np数组repeat num_legal_actions次
     landlord_up_played_cards_batch = np.repeat(
         landlord_up_played_cards[np.newaxis, :],
         num_legal_actions, axis=0)
-
+    #  landlord_down_played_cards的手牌转为np数组
     landlord_down_played_cards = _cards2array(
         infoset.played_cards['landlord_down'])
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对landlord_down_played_cards对应的np数组repeat num_legal_actions次
     landlord_down_played_cards_batch = np.repeat(
         landlord_down_played_cards[np.newaxis, :],
         num_legal_actions, axis=0)
 
+    #  infoset.bomb_num的手牌转为np数组
     bomb_num = _get_one_hot_bomb(
         infoset.bomb_num)
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对bomb_num对应的np数组repeat num_legal_actions次
     bomb_num_batch = np.repeat(
         bomb_num[np.newaxis, :],
         num_legal_actions, axis=0)
-
+    # 获取附带action的np水平堆叠数组
     x_batch = np.hstack((my_handcards_batch,
                          other_handcards_batch,
                          last_action_batch,
@@ -345,6 +367,7 @@ def _get_obs_landlord(infoset):
                          landlord_down_num_cards_left_batch,
                          bomb_num_batch,
                          my_action_batch))
+    # 获取未附带action的np水平堆叠数组
     x_no_action = np.hstack((my_handcards,
                              other_handcards,
                              last_action,
@@ -353,8 +376,10 @@ def _get_obs_landlord(infoset):
                              landlord_up_num_cards_left,
                              landlord_down_num_cards_left,
                              bomb_num))
+    #  infoset.card_play_action_seq牌转为np数组
     z = _action_seq_list2array(_process_action_seq(
     infoset.card_play_action_seq, 15, False), "old")
+    # axis=0表示横轴，axis=1表示纵轴， 这里是指沿着横轴对num_legal_actions对应的np数组repeat num_legal_actions次
     z_batch = np.repeat(
         z[np.newaxis, :, :],
         num_legal_actions, axis=0)
@@ -367,6 +392,7 @@ def _get_obs_landlord(infoset):
         'z': z.astype(np.int8),
     }
     return obs
+
 
 def _get_obs_landlord_up(infoset):
     """
@@ -465,6 +491,7 @@ def _get_obs_landlord_up(infoset):
         'z': z.astype(np.int8),
     }
     return obs
+
 
 def _get_obs_landlord_down(infoset):
     """
@@ -569,6 +596,7 @@ def _get_obs_landlord_down(infoset):
         'z': z.astype(np.int8),
     }
     return obs
+
 
 def _get_obs_resnet(infoset, position):
     num_legal_actions = len(infoset.legal_actions)
@@ -693,6 +721,7 @@ def _get_obs_resnet(infoset, position):
         'z': z.astype(np.int8),
     }
     return obs
+
 
 def _get_obs_general(infoset, position):
     num_legal_actions = len(infoset.legal_actions)

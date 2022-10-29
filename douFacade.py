@@ -3,7 +3,7 @@
 # Created by: Raf
 # Modify by: Vincentzyx
 import collections
-
+import time
 import traceback
 import warnings
 from douzero.env.game import GameEnv
@@ -11,6 +11,7 @@ from douzero.evaluation.deep_agent import DeepAgent
 import BidModel
 import LandlordModel
 import FarmerModel
+import queue
 
 warnings.filterwarnings('ignore')
 
@@ -96,7 +97,7 @@ class DouFacade(object):
         self.initial_multiply = ""
         # -------------------
         self.shouldExit = 0  # 通知上一轮记牌结束
-        self.card_play_model_path_dict = {
+        self.card_play_resnet_path_dict = {
             'landlord': "baselines/resnet/resnet_landlord.ckpt",
             'landlord_up': "baselines/resnet/resnet_landlord_up.ckpt",
             'landlord_down': "baselines/resnet/resnet_landlord_down.ckpt"
@@ -128,6 +129,8 @@ class DouFacade(object):
 
         self.user_position_code = 0
         self.user_position = ['landlord_up', 'landlord', 'landlord_down'][self.user_position_code]
+        self.play_order_queue = None  # 创建 Queue 队列
+        self.is_start = False
 
     def init_cards(self, _user_hand_cards_real, _three_landlord_cards_real, _user_position_code, _model_type):
         self.model_type = _model_type
@@ -163,6 +166,20 @@ class DouFacade(object):
         self.user_position_code = _user_position_code
 
         self.user_position = ['landlord_up', 'landlord', 'landlord_down'][self.user_position_code]
+        # 设置出牌队列顺序
+        self.play_order_queue = queue.Queue()
+        if self.user_position_code == 0:
+            self.play_order_queue.put(3)
+            self.play_order_queue.put(1)
+            self.play_order_queue.put(2)
+        elif self.user_position_code == 1:
+            self.play_order_queue.put(2)
+            self.play_order_queue.put(3)
+            self.play_order_queue.put(1)
+        else:
+            self.play_order_queue.put(1)
+            self.play_order_queue.put(2)
+            self.play_order_queue.put(3)
 
         # 整副牌减去玩家手上的牌，就是其他人的手牌,再分配给另外两个角色（如何分配对AI判断没有影响）
         for i in set(AllEnvCard):
@@ -176,39 +193,37 @@ class DouFacade(object):
             ['landlord_up', 'landlord', 'landlord_down'][(self.user_position_code + 2) % 3]:
                 self.other_hand_cards[0:17] if (self.user_position_code + 1) % 3 == 1 else self.other_hand_cards[17:]
         })
-        try:
-            # 地主model初始化
-            if _model_type == "resnet":
-                LandlordModel.init_model("baselines/resnet/landlord.ckpt")
-            elif _model_type == "wp":
-                LandlordModel.init_model("baselines/douzero_WP/landlord.ckpt")
-            elif _model_type == "adp":
-                LandlordModel.init_model("baselines/douzero_ADP/landlord.ckpt")
-            else:
-                LandlordModel.init_model("baselines/sl/landlord.ckpt")
-            # AI 初始化
-            self.play_order = 0 if self.user_position == "landlord" else 1 if self.user_position == "landlord_up" else 2
-            self.LastValidPlayPos = self.play_order
-            if self.model_type == "resnet":
-                ai_players = [self.user_position,
-                              DeepAgent(self.user_position, self.card_play_model_path_dict[self.user_position])]
-            elif self.model_type == "wp":
-                ai_players = [self.user_position,
-                              DeepAgent(self.user_position, self.card_play_wp_model_path[self.user_position])]
-            elif self.model_type == "adp":
-                ai_players = [self.user_position,
-                              DeepAgent(self.user_position, self.card_play_adp_model_path[self.user_position])]
-            else:
-                ai_players = [self.user_position,
-                              DeepAgent(self.user_position, self.card_play_model_path_dict[self.user_position])]
+        self.card_play_data_list["three_landlord_cards"] = self.card_play_data_list["landlord"][0:3]
 
-            self.env = GameEnv(ai_players, None)
+        # 地主model初始化
+        if _model_type == "resnet":
+            LandlordModel.init_model("baselines/resnet/landlord.ckpt")
+        elif _model_type == "wp":
+            LandlordModel.init_model("baselines/douzero_WP/landlord.ckpt")
+        elif _model_type == "adp":
+            LandlordModel.init_model("baselines/douzero_ADP/landlord.ckpt")
+        else:
+            LandlordModel.init_model("baselines/sl/landlord.ckpt")
+        # AI 初始化
+        self.play_order = 0 if self.user_position == "landlord" else 1 if self.user_position == "landlord_up" else 2
+        self.LastValidPlayPos = self.play_order
+        if self.model_type == "resnet":
+            ai_players = [self.user_position,
+                          DeepAgent(self.user_position, self.card_play_resnet_path_dict[self.user_position])]
+        elif self.model_type == "wp":
+            ai_players = [self.user_position,
+                          DeepAgent(self.user_position, self.card_play_wp_model_path[self.user_position])]
+        elif self.model_type == "adp":
+            ai_players = [self.user_position,
+                          DeepAgent(self.user_position, self.card_play_adp_model_path[self.user_position])]
+        else:
+            ai_players = [self.user_position,
+                          DeepAgent(self.user_position, self.card_play_resnet_path_dict[self.user_position])]
 
-        except Exception as e:
-            return "Error {0}".format(str(e))
-        self.GameRecord.clear()
-        self.env.card_play_init(self.card_play_data_list)
-        print("info: " + self.card_play_data_tostr(self.card_play_data_list))
+        self.env = GameEnv(ai_players, None)
+
+
+        # print("info: " + self.card_play_data_tostr(self.card_play_data_list))
         return 1
 
     @staticmethod
@@ -228,8 +243,11 @@ class DouFacade(object):
         return t_str
 
     # 处理其他用户
-    def handle_others(self, last_cards, nick):
-
+    def handle_others(self, last_cards, nick, user_position_code, desk_use_pos):
+        if not self.is_start:
+            self.GameRecord.clear()
+            self.env.card_play_init(self.card_play_data_list)
+            self.is_start = True
         self.other_played_cards_real = last_cards
         self.other_played_cards_env = [RealCard2EnvCard[c] for c in list(self.other_played_cards_real)]
         self.other_played_cards_env.sort()
@@ -240,10 +258,22 @@ class DouFacade(object):
         else:
             self.lower_played_cards_real = cards
         # 元引擎中为三方游戏，所以需要把三方流程走完
-        self.env.step(self.user_position, self.other_played_cards_env)
-        self.GameRecord.append(self.other_played_cards_real if self.other_played_cards_real != "" else "Pass")
-        # 清理对手牌，更新记牌器
-        self.record_cards()
+
+        if len(self.card_play_data_list[self.user_position]) > 0:
+            if self.other_played_cards_real != "DX" \
+                    or len(self.other_played_cards_real) == 4 \
+                    and len(set(self.other_played_cards_real)) == 1:
+                self.env.step(self.user_position, self.other_played_cards_env)
+            else:
+                self.other_played_cards_real = ""
+                self.other_played_cards_env = ""
+                self.env.step(self.user_position, [])
+
+            self.GameRecord.append(self.other_played_cards_real if self.other_played_cards_real != "" else "Pass")
+            # 清理对手牌，更新记牌器
+            self.record_cards()
+        else:
+            print("牌已经结束，本人牌已经出完！")
 
     @staticmethod
     def action_to_str(action):
@@ -279,8 +309,8 @@ class DouFacade(object):
 
         hand_cards_str = ''.join(
             [EnvCard2RealCard[c] for c in self.env.info_sets[self.user_position].player_hand_cards])
-        print("出牌:", action_message["action"] if action_message["action"] else "Pass", "| 得分:",
-              round(action_message["win_rate"], 3), "| 剩余手牌:", hand_cards_str)
+        # print("出牌:", action_message["action"] if action_message["action"] else "Pass", "| 得分:",
+        # round(action_message["win_rate"], 3), "| 剩余手牌:", hand_cards_str)
         play = action_message["action"] if action_message["action"] else "Pass"
         win_rate = action_message["win_rate"] if action_message["win_rate"] else 0
         self.GameRecord.append(action_message["action"] if action_message["action"] != "" else "Pass")
@@ -288,14 +318,26 @@ class DouFacade(object):
         return res
 
     def play_one_poke(self, user_position_code):
+        if not self.is_start:
+            self.GameRecord.clear()
+            self.env.card_play_init(self.card_play_data_list)
+            self.is_start = True
         index = int(user_position_code)
         self.user_position = ['landlord_up', 'landlord', 'landlord_down'][index]
-        action_message, action_list = self.env.step(self.user_position)
-        play = action_message["action"] if action_message["action"] else "Pass"
-        win_rate = action_message["win_rate"] if action_message["win_rate"] else 0
-        res = {"action": play, "win_rate": round(win_rate,3)}
-        self.GameRecord.append(action_message["action"] if action_message["action"] != "" else "Pass")
-        return res
+        if len(self.card_play_data_list[self.user_position]) > 0:
+            start_time = time.time()
+            action_message, action_list = self.env.step(self.user_position)
+            end_time = time.time()
+            int_time = (end_time - start_time)*1000
+            print("计算出牌花费的时间：", str(int_time))
+            play = action_message["action"] if action_message["action"] else "Pass"
+            win_rate = action_message["win_rate"] if action_message["win_rate"] else 0
+            res = {"action": play, "win_rate": round(win_rate, 3), "hands_pokes": self.card_play_data_list[self.user_position] }
+            self.GameRecord.append(action_message["action"] if action_message["action"] != "" else "Pass")
+            print("剩余手牌：", self.card_play_data_list[self.user_position])
+            return res
+        else:
+            return {"action": "Pass", "win_rate": 0.99, "msg": "手牌为【】"}
 
     # 判断是否明牌， is_farmer = false , 表示地主
     def judge_if_mingpai(self, cards_str, three_cards, user_position_code, is_farmer):
@@ -352,14 +394,17 @@ class DouFacade(object):
                 return {'result': 1, 'farmer_score': round(farmer_score, 3), 'landlord_score': round(win_rate, 3)}
         return {'result': 0, 'farmer_score': round(farmer_score, 3), 'landlord_score': round(win_rate, 3)}
 
-    def eval_poke_score(self, cards_str, three_cards, user_position_code, is_farmer):
+    def eval_poke_score(self, cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type):
         if is_farmer == "0":
             index = int(user_position_code)
             user_position = ['up', 'landlord', 'down'][index]
             result = FarmerModel.predict(cards_str, user_position)
         else:
-            result = LandlordModel.predict_by_model(cards_str, three_cards)
-
+            # print("eval_poke_score", cards_str, three_cards)
+            if len(three_cards) > 0:
+                result = LandlordModel.predict_by_model(cards_str, three_cards)
+            else:
+                result = BidModel.predict_score(cards_str)
         return round(result, 3)
 
     # 叫地主类型：1， 首叫；2，抢地主
@@ -392,11 +437,13 @@ class DouFacade(object):
         # reset user_hand_cards
         user_hand_cards_env = [RealCard2EnvCard[c] for c in list(my_hand_cards_real)]
         index = int(user_position_code)
-        user_position = ['up', 'landlord', 'down'][index]
-        self.env.info_sets[user_position].player_hand_cards = user_hand_cards_env
-        # reset played cards
-        my_played_cards = list(self.env.played_cards[user_position])
-        for exist_card in user_hand_cards_env:
-            if exist_card in my_played_cards:
-                my_played_cards.remove(exist_card)
+        user_position = ['landlord_up', 'landlord', 'landlord_down'][index]
+        # temp_list = user_hand_cards_env - self.env.info_sets[self.user_position].player_hand_cards
+        if not user_hand_cards_env == self.env.info_sets[self.user_position].player_hand_cards:
+            self.env.info_sets[self.user_position].player_hand_cards = user_hand_cards_env
+            # reset played cards
+            my_played_cards = list(self.env.played_cards[user_position])
+            for exist_card in user_hand_cards_env:
+                if exist_card in my_played_cards:
+                    self.env.played_cards[user_position].remove(exist_card)
         return self.env.info_sets[user_position].player_hand_cards

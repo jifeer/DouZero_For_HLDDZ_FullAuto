@@ -264,7 +264,7 @@ class MyPyQT_Form(QtWidgets.QWidget, Ui_Form):
                       DeepAgent(self.user_position, self.card_play_model_path_dict[self.user_position])]
         # ai_players2 = [self.user_position,
         #                DeepAgent(self.user_position, self.card_play_wp_model_path[self.user_position])]
-        self.env = GameEnv(self,ai_players, None)
+        self.env = GameEnv(self, ai_players, None)
 
         try:
             self.start()
@@ -450,6 +450,7 @@ class MyPyQT_Form(QtWidgets.QWidget, Ui_Form):
         st = time.time()
         step_count = 0
         while not self.env.game_over and self.RunGame:
+            # 默认本人是0位置
             if self.play_order == 0:
                 self.PredictedCard.setText("...")
                 action_message, action_list = self.env.step(self.user_position)

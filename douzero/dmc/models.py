@@ -12,7 +12,25 @@ import torch.nn.functional as F
 class LandlordLstmModel(nn.Module):
     def __init__(self):
         super().__init__()
+        """
+        input_size 输入数据的特征维数，通常就是embedding_dim(词向量的维度)
+        hidden_size　LSTM中隐层的维度
+        num_layers　循环神经网络的层数
+        bias　用不用偏置，default=True
+        batch_first 这个要注意，通常我们输入的数据shape=(batch_size,seq_length,embedding_dim),而batch_first默认是False,
+        所以我们的输入数据最好送进LSTM之前将batch_size与seq_length这两个维度调换
+        dropout　默认是0，代表不用dropout
+        bidirectional默认是false，代表不用双向LSTM
+        """
+        # 单向LSTm
         self.lstm = nn.LSTM(162, 128, batch_first=True)
+        """
+        nn.Linear（）是用于设置网络中的全连接层的，需要注意在二维图像处理的任务中，
+        全连接层的输入与输出一般都设置为二维张量，形状通常为[batch_size, size]，不同于卷积层要求输入输出是四维张量
+        in_features指的是输入的二维张量的大小，即输入的[batch_size, size]中的size。
+        out_features指的是输出的二维张量的大小，即输出的二维张量的形状为[batch_size，output_size]，当然，它也代表了该全连接层的神经元个数。
+        从输入输出的张量的shape角度来理解，相当于一个输入为[batch_size, in_features]的张量变换成了[batch_size, out_features]的输出张量。
+        """
         self.dense1 = nn.Linear(373 + 128, 512)
         self.dense2 = nn.Linear(512, 512)
         self.dense3 = nn.Linear(512, 512)
@@ -22,9 +40,13 @@ class LandlordLstmModel(nn.Module):
 
     def forward(self, z, x, return_value=False, flags=None):
         lstm_out, (h_n, _) = self.lstm(z)
-        lstm_out = lstm_out[:,-1,:]
-        x = torch.cat([lstm_out,x], dim=-1)
+        # python  numpy 中的array, mat 取数据i:j:k 从下标i个开始到下标j-1结束，步长为k，(k为整数且不能等于0,缺省为1),","隔开依次二‘三’4等维度
+        lstm_out = lstm_out[:, -1, :]
+        # torch.cat() 和python中的内置函数cat()， 在使用和目的上，是没有区别的，区别在于前者操作对象是tensor。
+        x = torch.cat([lstm_out, x], dim=-1)
+        print(x)
         x = self.dense1(x)
+        # ReLU函数有个inplace参数，如果设为True，它会把输出直接覆盖到输入中，这样可以节省内存/显存, 小于0的，被置为0
         x = torch.relu(x)
         x = self.dense2(x)
         x = torch.relu(x)
@@ -36,12 +58,18 @@ class LandlordLstmModel(nn.Module):
         x = torch.relu(x)
         x = self.dense6(x)
         if return_value:
-            return dict(values=x)
+            action = dict(values=x)
+            # print("return_value: ", action)
+            return action
         else:
             if flags is not None and flags.exp_epsilon > 0 and np.random.rand() < flags.exp_epsilon:
                 action = torch.randint(x.shape[0], (1,))[0]
+                '''
+                print("flags is not None and flags.exp_epsilon > 0 and np.random.rand() < flags.exp_epsilon: ", action)
+                '''
             else:
                 action = torch.argmax(x,dim=0)[0]
+                # print("else: ", action)
             return dict(action=action)
 
 class FarmerLstmModel(nn.Module):

@@ -146,7 +146,7 @@ class GameEnv(object):
         return False
 
     def step(self, position, action=None):
-        print(position)
+        # print(position)
         if action is None:
             action = []
         win_rate = 0
@@ -224,7 +224,7 @@ class GameEnv(object):
         action_message = {"action": str(''.join([EnvCard2RealCard[c] for c in action])),
                           "win_rate": float(win_rate), "action_list": show_action_list}
 
-        print(action_message, show_action_list)
+        # print(action_message, show_action_list)
         return action_message, show_action_list
 
     def get_action_list(self):
@@ -265,10 +265,14 @@ class GameEnv(object):
         return self.acting_player_position
 
     def update_acting_player_hand_cards(self, action):
+
+        # print("### 手牌: ", self.info_sets[self.acting_player_position].player_hand_cards)
+        # print("### action: ", action)
         if action != []:
             # 更新玩家手牌，删除对应的牌
             if self.acting_player_position == self.players[0]:
                 for card in action:
+                    print("to removed card:", card)
                     self.info_sets[self.acting_player_position].player_hand_cards.remove(card)
             # 更新另外两个玩家手牌，删除相同数量的牌
             else:
