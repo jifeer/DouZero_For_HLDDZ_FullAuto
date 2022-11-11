@@ -2,39 +2,26 @@
 # Created by: Raf
 # Modify by: Vincentzyx
 import collections
-import random
-
-import PIL
 
 import GameHelper as gh
 from GameHelper import GameHelper
-import os
 import sys
 import time
-from threading import Thread
 import pyautogui
-import win32gui
 from PIL import Image
 import numpy as np
 import cv2
 import traceback
-import datetime
-import re
 import warnings
-import requests
 
 from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtWidgets import QMessageBox, QTextBrowser, QTextEdit
-from PyQt5.QtGui import QTextCursor
 from PyQt5.QtCore import QTime, QEventLoop
 from MainWindow import Ui_Form
 
 from douzero.env.game import GameEnv
 from douzero.evaluation.deep_agent import DeepAgent
 from douzero.env.move_detector import get_move_type
-import BidModel
-import LandlordModel
-import FarmerModel
+from douzero.analysis import BidModel, FarmerModel, LandlordModel
 
 warnings.filterwarnings('ignore')
 

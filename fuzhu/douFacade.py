@@ -8,10 +8,9 @@ import traceback
 import warnings
 from douzero.env.game import GameEnv
 from douzero.evaluation.deep_agent import DeepAgent
-import BidModel
-import LandlordModel
-import FarmerModel
+from douzero.analysis import BidModel, FarmerModel, LandlordModel
 import queue
+import web_global
 
 warnings.filterwarnings('ignore')
 
@@ -60,6 +59,10 @@ def manual_mingpai_requirements(cards_str):
         return False
 
 
+def new_dou_zero():
+    return DouFacade()
+
+
 class DouFacade(object):
     def __init__(self):
         self.model_type = ""
@@ -98,19 +101,19 @@ class DouFacade(object):
         # -------------------
         self.shouldExit = 0  # 通知上一轮记牌结束
         self.card_play_resnet_path_dict = {
-            'landlord': "baselines/resnet/resnet_landlord.ckpt",
-            'landlord_up': "baselines/resnet/resnet_landlord_up.ckpt",
-            'landlord_down': "baselines/resnet/resnet_landlord_down.ckpt"
+            'landlord': web_global.resnet_path + "resnet_landlord.ckpt",
+            'landlord_up': web_global.resnet_path + "resnet_landlord_up.ckpt",
+            'landlord_down': web_global.resnet_path + "resnet_landlord_down.ckpt"
         }
         self.card_play_wp_model_path = {
-            'landlord': "baselines/douzero_WP/landlord.ckpt",
-            'landlord_up': "baselines/douzero_WP/landlord_up.ckpt",
-            'landlord_down': "baselines/douzero_WP/landlord_down.ckpt"
+            'landlord': web_global.wp_path + "landlord.ckpt",
+            'landlord_up': web_global.wp_path + "landlord_up.ckpt",
+            'landlord_down': web_global.wp_path + "landlord_down.ckpt"
         }
         self.card_play_adp_model_path = {
-            'landlord': "baselines/douzero_ADP/landlord.ckpt",
-            'landlord_up': "baselines/douzero_ADP/landlord_up.ckpt",
-            'landlord_down': "baselines/douzero_ADP/landlord_down.ckpt"
+            'landlord': web_global.adp_path + "landlord.ckpt",
+            'landlord_up': web_global.adp_path + "landlord_up.ckpt",
+            'landlord_down': web_global.adp_path + "landlord_down.ckpt"
         }
         # others
         self.other_played_cards_real = ""
@@ -197,13 +200,13 @@ class DouFacade(object):
 
         # 地主model初始化
         if _model_type == "resnet":
-            LandlordModel.init_model("baselines/resnet/landlord.ckpt")
+            LandlordModel.init_model(web_global.resnet_path + "landlord.ckpt")
         elif _model_type == "wp":
-            LandlordModel.init_model("baselines/douzero_WP/landlord.ckpt")
+            LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
         elif _model_type == "adp":
-            LandlordModel.init_model("baselines/douzero_ADP/landlord.ckpt")
+            LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
         else:
-            LandlordModel.init_model("baselines/sl/landlord.ckpt")
+            LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
         # AI 初始化
         self.play_order = 0 if self.user_position == "landlord" else 1 if self.user_position == "landlord_up" else 2
         self.LastValidPlayPos = self.play_order
@@ -221,8 +224,6 @@ class DouFacade(object):
                           DeepAgent(self.user_position, self.card_play_resnet_path_dict[self.user_position])]
 
         self.env = GameEnv(ai_players, None)
-
-
         # print("info: " + self.card_play_data_tostr(self.card_play_data_list))
         return 1
 
@@ -447,3 +448,8 @@ class DouFacade(object):
                 if exist_card in my_played_cards:
                     self.env.played_cards[user_position].remove(exist_card)
         return self.env.info_sets[user_position].player_hand_cards
+
+
+if __name__ == "__main__":
+    print("only a test")
+

@@ -3,10 +3,6 @@
 import os
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
-from torch.utils.data.dataset import Dataset
-from douzero.dmc.models import model_dict_resnet
-import time
 from douzero.env.game import GameEnv
 from douzero.evaluation.deep_agent import DeepAgent
 
@@ -58,9 +54,9 @@ net = Net()
 net.eval()
 if os.path.exists("baselines/pkl/landlord_weights.pkl"):
     if torch.cuda.is_available():
-        net.load_state_dict(torch.load('./baselines/pkl/landlord_weights.pkl'))
+        net.load_state_dict(torch.load('baselines/pkl/landlord_weights.pkl'))
     else:
-        net.load_state_dict(torch.load('./baselines/pkl/landlord_weights.pkl', map_location=torch.device("cpu")))
+        net.load_state_dict(torch.load('baselines/pkl/landlord_weights.pkl', map_location=torch.device("cpu")))
 else:
     print("landlord_weights.pkl not found")
 

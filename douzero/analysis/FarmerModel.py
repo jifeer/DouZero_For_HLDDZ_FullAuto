@@ -4,9 +4,6 @@ import os
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from torch.utils.data.dataset import Dataset
-import time
 
 
 def EnvToOnehot(cards):
@@ -53,23 +50,23 @@ class Net(nn.Module):
 
 
 Nets = {"up": Net(), "down": Net(), "farmer": Net()}
-if os.path.exists("baselines/pkl/landlord_up_weights_new.pkl"):
+if os.path.exists("../../../baselines/pkl/landlord_up_weights_new.pkl"):
     if torch.cuda.is_available():
-        Nets["up"].load_state_dict(torch.load("./baselines/pkl/landlord_up_weights_new.pkl"))
+        Nets["up"].load_state_dict(torch.load("../../../baselines/pkl/landlord_up_weights_new.pkl"))
     else:
-        Nets["up"].load_state_dict(torch.load("./baselines/pkl/landlord_up_weights_new.pkl", map_location=torch.device("cpu")))
+        Nets["up"].load_state_dict(torch.load("../../../baselines/pkl/landlord_up_weights_new.pkl", map_location=torch.device("cpu")))
     Nets["up"].eval()
-if os.path.exists("baselines/pkl/landlord_down_weights_new.pkl"):
+if os.path.exists("../../../baselines/pkl/landlord_down_weights_new.pkl"):
     if torch.cuda.is_available():
-        Nets["down"].load_state_dict(torch.load("./baselines/pkl/landlord_down_weights_new.pkl"))
+        Nets["down"].load_state_dict(torch.load("../../../baselines/pkl/landlord_down_weights_new.pkl"))
     else:
-        Nets["down"].load_state_dict(torch.load("./baselines/pkl/landlord_down_weights_new.pkl", map_location=torch.device("cpu")))
+        Nets["down"].load_state_dict(torch.load("../../../baselines/pkl/landlord_down_weights_new.pkl", map_location=torch.device("cpu")))
     Nets["down"].eval()
-if os.path.exists("baselines/pkl/farmer_weights_new.pkl"):
+if os.path.exists("../../../baselines/pkl/farmer_weights_new.pkl"):
     if torch.cuda.is_available():
-        Nets["farmer"].load_state_dict(torch.load("./baselines/pkl/farmer_weights_new.pkl"))
+        Nets["farmer"].load_state_dict(torch.load("../../../baselines/pkl/farmer_weights_new.pkl"))
     else:
-        Nets["farmer"].load_state_dict(torch.load("./baselines/pkl/farmer_weights_new.pkl", map_location=torch.device("cpu")))
+        Nets["farmer"].load_state_dict(torch.load("../../../baselines/pkl/farmer_weights_new.pkl", map_location=torch.device("cpu")))
     Nets["farmer"].eval()
 
 

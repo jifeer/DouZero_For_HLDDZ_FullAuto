@@ -446,6 +446,7 @@ def _get_obs_landlord_up(infoset):
 
     teammate_played_cards = _cards2array(
         infoset.played_cards['landlord_down'])
+    print("infoset.played_cards['landlord_down'] = ", infoset.played_cards['landlord_down'])
     teammate_played_cards_batch = np.repeat(
         teammate_played_cards[np.newaxis, :],
         num_legal_actions, axis=0)

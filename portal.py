@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 import traceback
-import ujson
 import uvicorn
 from fastapi import FastAPI, Request
-import douFacade
-from douFacade import DouFacade
+from fastapi.responses import JSONResponse
+from fuzhu import douFacade
+from fuzhu.douFacade import DouFacade
 # 过滤掉警示信息
 import warnings
 
@@ -15,23 +15,23 @@ portal = FastAPI()
 
 douFacadeAry = {}
 
-
+# encode_html_chars=True to encode < > & as unicode escape sequences.
 @portal.get('/')
 async def hello_world():
-    return ujson.dumps({'msg': "", 'result': "Succeed to connect AI server", 'code': 0})
+    return JSONResponse({'msg': "", 'result': "Succeed to connect AI server", 'code': 0})
 
 
 @portal.get('/manual_landlord_requirements/<cards_str>')
 async def manual_landlord_requirements(request: Request):
     result = douFacade.manual_landlord_requirements(request.query_params.get('cards_str'))
 
-    return ujson.dumps({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
+    return JSONResponse({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
 
 
 @portal.get('/manual_mingpai_requirements/<cards_str>')
 async def manual_mingpai_requirements(request: Request):
     result = douFacade.manual_mingpai_requirements(request.query_params.get('cards_str'))
-    return ujson.dumps({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
+    return JSONResponse({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
 
 
 @portal.get('/poke/init_cards')
@@ -52,11 +52,11 @@ async def init_cards(request: Request):
 
         result = dou_facade_inst.init_cards(user_hand_cards_real, three_landlord_cards_real, user_position_code,
                                             model_type)
-        return ujson.dumps({'user_position_code': user_position_code, 'result': result, 'code': 0})
+        return JSONResponse({'user_position_code': user_position_code, 'result': result, 'code': 0})
     except Exception as e:
         res = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {res}")
-    return ujson.dumps({'result': res, 'msg': "处理失败"})
+    return JSONResponse({'result': res, 'msg': "处理失败"})
 
 
 @portal.get('/poke/handle_others')
@@ -85,11 +85,11 @@ async def handle_others(request: Request):
             print("!!!!!!!!!!Error: 当前应该执行的玩家是：", server_current_pos)
         dou_facade_inst.handle_others(last_cards, nick, user_position_code, other_user_pos)
         dou_facade_inst.play_order_queue.put(server_current_pos)
-        return ujson.dumps({'nick': nick, 'msg': "Succeed to deal with workflow", 'code': 0})
+        return JSONResponse({'nick': nick, 'msg': "Succeed to deal with workflow", 'code': 0})
     except Exception as e:
         res = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {res}")
-    return ujson.dumps({'nick': nick, 'result': res, 'msg': "处理失败"})
+    return JSONResponse({'nick': nick, 'result': res, 'msg': "处理失败"})
 
 
 @portal.get('/poke/replay')
@@ -101,11 +101,11 @@ async def prepare_start(request: Request):
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.prepare_start()
-        return ujson.dumps({'code': 0, 'result': result, 'request_id': "prepare_start"})
+        return JSONResponse({'code': 0, 'result': result, 'request_id': "prepare_start"})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-    return ujson.dumps({'code': 1, 'result': msg, 'request_id': "prepare_start"})
+    return JSONResponse({'code': 1, 'result': msg, 'request_id': "prepare_start"})
 
 
 @portal.get('/poke/play')
@@ -131,12 +131,12 @@ async def play_one_poke(request: Request):
             action = ""
         print("#########################################")
         dou_facade_inst.play_order_queue.put(server_current_pos)
-        return ujson.dumps(
+        return JSONResponse(
             {'winRate': result.get("win_rate"), 'action': action, 'code': 0, 'hands_pokes': result.get("hands_pokes")})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-    return ujson.dumps({'code': 1, 'result': msg, 'request_id': "play_one_poke"})
+    return JSONResponse({'code': 1, 'result': msg, 'request_id': "play_one_poke"}, escape_forward_slashes=False)
 
 
 @portal.get('/poke/judge_if_mingpai')
@@ -152,11 +152,11 @@ async def judge_if_mingpai(request: Request):
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.judge_if_mingpai(cards_str, three_cards, user_position_code, is_farmer)
-        return ujson.dumps({'is_farmer': is_farmer, 'result': result, 'code': 0})
+        return JSONResponse({'is_farmer': is_farmer, 'result': result, 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-    return ujson.dumps({'code': 1, 'result': msg, 'request_id': "judge_if_mingpai"})
+    return JSONResponse({'code': 1, 'result': msg, 'request_id': "judge_if_mingpai"})
 
 
 @portal.get('/poke/judge_if_jiaodizhu')
@@ -171,11 +171,11 @@ async def judge_if_jiaodizhu(request: Request):
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.judge_if_jiaodizhu(cards_str, jiao_dizhu_type)
-        return ujson.dumps({'user_position_code': user_position_code, 'result': result, 'code': 0})
+        return JSONResponse({'user_position_code': user_position_code, 'result': result, 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-    return ujson.dumps({'code': 1, 'result': msg, 'msg': "judge_if_jiaodizhu"})
+    return JSONResponse({'code': 1, 'result': msg, 'msg': "judge_if_jiaodizhu"})
 
 
 @portal.get('/poke/eval_poke_score')
@@ -192,11 +192,11 @@ async def eval_poke_score(request: Request):
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
         result = dou_facade_inst.eval_poke_score(cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type)
-        return ujson.dumps({'user_position_code': user_position_code, 'win_rate': result, 'code': 0})
+        return JSONResponse({'user_position_code': user_position_code, 'win_rate': result, 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-    return ujson.dumps({'code': 1, 'result': msg, 'msg': "eval_poke_score"})
+    return JSONResponse({'code': 1, 'result': msg, 'msg': "eval_poke_score"})
 
 
 @portal.get('/poke/judge_if_jiabei')
@@ -214,11 +214,11 @@ async def judge_if_jiabei(request: Request):
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
         result = dou_facade_inst.judge_if_jiabei(cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type)
-        return ujson.dumps(result)
+        return JSONResponse(result)
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-    return ujson.dumps({'code': 1, 'result': msg, 'msg': "judge_if_jiabei"})
+    return JSONResponse({'code': 1, 'result': msg, 'msg': "judge_if_jiabei"})
 
 
 @portal.get('/poke/reset_hands_cards')
@@ -235,12 +235,32 @@ async def reset_hands_cards(request: Request):
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
         # result = dou_facade_inst.reset_my_hand_card(user_position_code, cards_str)
-        return ujson.dumps({'code': 0, 'result': 1, 'msg': "reset_hands_cards", "ld_num": ld_num})
+        return JSONResponse({'code': 0, 'result': 1, 'msg': "reset_hands_cards", "ld_num": ld_num})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
-        return ujson.dumps({'code': 1, 'result': 0, 'msg': msg})
+        return JSONResponse({'code': 1, 'result': 0, 'msg': msg})
 
 
 if __name__ == '__main__':
-    uvicorn.run(app='portal:portal', host="127.0.0.1", port=9000, reload=True)
+    import sys
+    import io
+    import colorama
+
+    args = sys.argv
+    print(args)
+    # ['test.py', 'my.txt', '/home/charles', '/home/charles/target']
+    monitorId = 0
+    if len(args) > 1:
+        monitorId = args[1]  # 模拟器编号
+        print(monitorId)
+    if monitorId:
+        port = int(18000) + int(monitorId)
+    else:
+        port = 18001
+    print(" port is %d", port)
+    # 改变标准输出的默认编码
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+    colorama.init(autoreset=True)
+
+    uvicorn.run(app='portal:portal', host="127.0.0.1", port=port, reload=True, limit_concurrency=500)

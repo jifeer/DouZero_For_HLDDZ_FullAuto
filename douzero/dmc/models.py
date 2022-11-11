@@ -44,7 +44,7 @@ class LandlordLstmModel(nn.Module):
         lstm_out = lstm_out[:, -1, :]
         # torch.cat() 和python中的内置函数cat()， 在使用和目的上，是没有区别的，区别在于前者操作对象是tensor。
         x = torch.cat([lstm_out, x], dim=-1)
-        print(x)
+        # print(x)
         x = self.dense1(x)
         # ReLU函数有个inplace参数，如果设为True，它会把输出直接覆盖到输入中，这样可以节省内存/显存, 小于0的，被置为0
         x = torch.relu(x)

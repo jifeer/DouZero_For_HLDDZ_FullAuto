@@ -1,8 +1,7 @@
 from copy import deepcopy
 from . import move_detector as md, move_selector as ms
 from .move_generator import MovesGener
-import random
-from search_utility import search_actions, select_optimal_path, check_42
+from fuzhu.search_utility import search_actions, select_optimal_path, check_42
 import numpy as np
 
 EnvCard2RealCard = {3: '3', 4: '4', 5: '5', 6: '6', 7: '7',
@@ -272,7 +271,7 @@ class GameEnv(object):
             # 更新玩家手牌，删除对应的牌
             if self.acting_player_position == self.players[0]:
                 for card in action:
-                    print("to removed card:", card)
+                    # print("to removed card:", card)
                     self.info_sets[self.acting_player_position].player_hand_cards.remove(card)
             # 更新另外两个玩家手牌，删除相同数量的牌
             else:
