@@ -43,11 +43,15 @@ async def init_cards(request: Request):
         three_landlord_cards_real = request.query_params.get('three_landlord_cards_real')
         user_position_code = int(request.query_params.get('user_position_code'))
         model_type = request.query_params.get('model_type')
-        dou_facade_inst = DouFacade()
-        douFacadeAry[ld_num] = dou_facade_inst
+
+        if ld_num in douFacadeAry:
+            dou_facade_inst = douFacadeAry[ld_num]
+        else:
+            raise Exception("dou_facde_inst 尚未初始化!", ld_num)
+
         if user_position_code == "1":
             # 说明玩家本人是地主
-            if three_landlord_cards_real == "":
+            if len(three_landlord_cards_real) < 3:
                 three_landlord_cards_real = user_hand_cards_real[:3]
 
         result = dou_facade_inst.init_cards(user_hand_cards_real, three_landlord_cards_real, user_position_code,
@@ -151,6 +155,7 @@ async def judge_if_mingpai(request: Request):
             dou_facade_inst = douFacadeAry[ld_num]
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
+
         result = dou_facade_inst.judge_if_mingpai(cards_str, three_cards, user_position_code, is_farmer)
         return JSONResponse({'is_farmer': is_farmer, 'result': result, 'code': 0})
     except Exception as e:
@@ -170,8 +175,9 @@ async def judge_if_jiaodizhu(request: Request):
             dou_facade_inst = douFacadeAry[ld_num]
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
+
         result = dou_facade_inst.judge_if_jiaodizhu(cards_str, jiao_dizhu_type)
-        return JSONResponse({'user_position_code': user_position_code, 'result': result, 'code': 0})
+        return JSONResponse({'user_position_code': user_position_code, 'result': result.get("result"), 'landlord_score': result.get("landlord_score"), 'farmer_score': result.get("farmer_score"), 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
         logging.error(f"######模拟器【{ld_num}], error info: {msg}")
@@ -186,12 +192,12 @@ async def eval_poke_score(request: Request):
         cards_str = request.query_params.get('user_hand_cards_real')
         three_cards = request.query_params.get('three_landlord_cards_real')
         is_farmer = request.query_params.get('is_farmer')
-        jiao_dizhu_type = request.query_params.get('jiao_dizhu_type')
         if ld_num in douFacadeAry:
             dou_facade_inst = douFacadeAry[ld_num]
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
-        result = dou_facade_inst.eval_poke_score(cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type)
+
+        result = dou_facade_inst.eval_poke_score(cards_str, three_cards, user_position_code, is_farmer)
         return JSONResponse({'user_position_code': user_position_code, 'win_rate': result, 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
@@ -213,6 +219,7 @@ async def judge_if_jiabei(request: Request):
         else:
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
+        print("cards_str=" + cards_str)
         result = dou_facade_inst.judge_if_jiabei(cards_str, three_cards, user_position_code, is_farmer, jiao_dizhu_type)
         return JSONResponse(result)
     except Exception as e:
@@ -242,25 +249,49 @@ async def reset_hands_cards(request: Request):
         return JSONResponse({'code': 1, 'result': 0, 'msg': msg})
 
 
+@portal.get('/poke/init_ai_model')
+async def init_ai_model(request: Request):
+    ld_num = request.query_params.get('ld_num')
+    try:
+        model_type = request.query_params.get('model_type')
+        dou_facade_inst = DouFacade()
+        douFacadeAry[ld_num] = dou_facade_inst
+        result = dou_facade_inst.init_ai_model(model_type)
+        return JSONResponse({'result': result, 'code': 0})
+    except Exception as e:
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f"######模拟器【{ld_num}], error info: {msg}")
+    return JSONResponse({'code': 1, 'result': msg, 'request_id': "judge_if_mingpai"})
+
+
 if __name__ == '__main__':
     import sys
     import io
     import colorama
+    import multiprocessing
+    # 下面这句必须在if下面添加
+    multiprocessing.freeze_support()
 
     args = sys.argv
     print(args)
     # ['test.py', 'my.txt', '/home/charles', '/home/charles/target']
     monitorId = 0
-    if len(args) > 1:
-        monitorId = args[1]  # 模拟器编号
-        print(monitorId)
-    if monitorId:
-        port = int(18000) + int(monitorId)
-    else:
-        port = 18001
-    print(" port is %d", port)
-    # 改变标准输出的默认编码
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
-    colorama.init(autoreset=True)
+    try:
+        if len(args) > 1:
+            monitorId = int(args[1].strip())
+            print("monite id is not null: ", monitorId)
+        if monitorId:
+            print("18000 + monitorId ")
+            port = int(18000) + monitorId
+        else:
+            port = 18003
+        print(" port is %d", port)
+        # 改变标准输出的默认编码
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+        colorama.init(autoreset=True)
 
-    uvicorn.run(app='portal:portal', host="127.0.0.1", port=port, reload=True, limit_concurrency=500)
+        uvicorn.run(app='portal:portal', host="127.0.0.1", port=port, reload=True, limit_concurrency=500)
+
+    except Exception as e:
+        msg = "Error {0}".format(traceback.format_exc())
+        logging.error(f" error info: {msg}")
