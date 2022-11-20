@@ -12,6 +12,6 @@ print(len(set(other_played_cards_real)) == 1)
 print(other_played_cards_real != "DX" or len(other_played_cards_real) == 4 and len(set(other_played_cards_real)) == 1)
 # not > and >or
 
-for i in range(11):
-    print("start python web.py ", i)
+for i in range(28):
+    print("start python portal.py ", i)
 

@@ -60,6 +60,8 @@ cmd中敲命令：python -m ensurepip
 ### nvidia 11.8
 
 1. cuda环境安装： https://blog.csdn.net/m0_45447650/article/details/123704930
+   1. 设置path
+      1. 
 2. cudnn下载部署： cudnn-windows-x86_64-8.5.0.96_cuda11-archive
    pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
@@ -72,3 +74,17 @@ cmd中敲命令：python -m ensurepip
 6. pip3 install fastapi
 7. pip3 install pyinstaller
 8. 打包：pyinstaller -D -i D:\e-projects\DouZero_For_HLDDZ_FullAuto\output\favicon.ico -p D:\e-projects\DouZero_For_HLDDZ_FullAuto -n dou-zero-server  --add-data ".\baselines;.\baselines"  douFacade.py
+
+9. python 安装console色彩包：pip3 install colorama
+
+
+## 错误处理
+
+数据量太大出现Memory Error问题，扩大虚拟内存的方法：
+1、打开 控制面板；
+2、找到 系统 这一项；
+3、找到 高级系统设置 这一项；
+4、点击 性能 模块的 设置 按钮；
+5、选择 高级面板，在 虚拟内存 模块点击更改；
+6、记得 不要 选中“自动管理所有驱动器的分页文件大小”，然后选择一个驱动器，也就是一个盘，选中自定义大小，手动输入初始大小和最大值，当然，最好不要太大，更改之后能在查看盘的使用情况，不要丢掉太多空间。
+7、都设置好之后，记得点击 “设置”， 然后再确定，否则无效，最后 重启电脑 就可以了。

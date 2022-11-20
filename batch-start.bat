@@ -13,13 +13,6 @@ echo 已获取管理员权限
 chcp 65001
 D:
 D:\e-projects\DouZero_For_HLDDZ_FullAuto
-start python web.py  1
-start python web.py  2
-start python web.py  3
-start python web.py  4
-start python web.py  5
-start python web.py  6
-start python web.py  7
-start python web.py  8
-start python web.py  9
-start python web.py  10
+start python portal.py  1
+start python portal.py  2
+start python portal.py  3

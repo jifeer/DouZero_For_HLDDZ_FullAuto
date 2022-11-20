@@ -137,7 +137,7 @@ class DouFacade(object):
     def init_ai_model(self, _model_type):
         # 地主model初始化
         if _model_type == "resnet":
-            LandlordModel.init_model(web_global.resnet_path + "landlord.ckpt")
+            LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
         elif _model_type == "wp":
             LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
         elif _model_type == "adp":
@@ -331,11 +331,11 @@ class DouFacade(object):
         index = int(user_position_code)
         self.user_position = ['landlord_up', 'landlord', 'landlord_down'][index]
         if len(self.card_play_data_list[self.user_position]) > 0:
-            start_time = time.time()
+            # start_time = time.time()
             action_message, action_list = self.env.step(self.user_position)
-            end_time = time.time()
-            int_time = (end_time - start_time)*1000
-            print("计算出牌花费的时间：", str(int_time))
+            # end_time = time.time()
+            # int_time = (end_time - start_time)*1000
+            # print("计算出牌花费的时间：", str(int_time))
             play = action_message["action"] if action_message["action"] else "Pass"
             win_rate = action_message["win_rate"] if action_message["win_rate"] else 0
             res = {"action": play, "win_rate": round(win_rate, 3), "hands_pokes": self.card_play_data_list[self.user_position] }
@@ -376,20 +376,21 @@ class DouFacade(object):
 
     # # 叫地主类型：1， 首叫(默认）；2，抢地主
     def judge_if_jiaodizhu(self, cards_str, jiao_dizhu_type):
-        have_bid = True
         threshold_index = 1
         farmer_score = 0
         win_rate = 0
-        landlord_requirement = manual_landlord_requirements(cards_str)
+        # landlord_requirement = manual_landlord_requirements(cards_str)
+        landlord_requirement = True
         if landlord_requirement:
-            if self.initial_bid_rate == "":
-                win_rate = BidModel.predict_score(cards_str)
-            else:
-                win_rate = self.initial_bid_rate
-            if self.initial_farmer_rate == "":
-                farmer_score = FarmerModel.predict(cards_str, "farmer")
-            else:
-                farmer_score = self.initial_farmer_rate
+            start_time = time.time()
+            win_rate = BidModel.predict_score(cards_str)
+            int_time = (time.time() - start_time)
+            print("BidModel计算出牌花费的时间：", str(int_time))
+
+            start2_time = time.time()
+            farmer_score = FarmerModel.predict(cards_str, "farmer")
+            int_time = (time.time() - start2_time)
+            print("FarmerModel计算出牌花费的时间：", str(int_time))
 
             compare_win_rate = win_rate
             if compare_win_rate > 0:
@@ -408,8 +409,12 @@ class DouFacade(object):
         if user_position_code != "1":
             index = int(user_position_code)
             user_position = ['up', 'landlord', 'down'][index]
-            print("cards_str=" + cards_str)
+            # print("cards_str=" + cards_str)
+            start_time = time.time()
             initial_bid_rate = FarmerModel.predict(cards_str, user_position)
+            end_time = time.time()
+            int_time = (end_time - start_time)
+            print("FarmerModel计算出牌花费的时间：", str(int_time))
             # (6, 1.2)
             jia_bei_threshold = web_global.FarmerJiabeiThreshold
             if initial_bid_rate > jia_bei_threshold[is_stolen]:

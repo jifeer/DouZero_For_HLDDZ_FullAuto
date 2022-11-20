@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import time
 import traceback
 import uvicorn
 from fastapi import FastAPI, Request
@@ -17,25 +18,25 @@ douFacadeAry = {}
 
 # encode_html_chars=True to encode < > & as unicode escape sequences.
 @portal.get('/')
-async def hello_world():
+def hello_world():
     return JSONResponse({'msg': "", 'result': "Succeed to connect AI server", 'code': 0})
 
 
 @portal.get('/manual_landlord_requirements/<cards_str>')
-async def manual_landlord_requirements(request: Request):
+def manual_landlord_requirements(request: Request):
     result = douFacade.manual_landlord_requirements(request.query_params.get('cards_str'))
 
     return JSONResponse({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
 
 
 @portal.get('/manual_mingpai_requirements/<cards_str>')
-async def manual_mingpai_requirements(request: Request):
+def manual_mingpai_requirements(request: Request):
     result = douFacade.manual_mingpai_requirements(request.query_params.get('cards_str'))
     return JSONResponse({'cards_str': request.query_params.get('cards_str'), 'result': result, 'code': 0})
 
 
 @portal.get('/poke/init_cards')
-async def init_cards(request: Request):
+def init_cards(request: Request):
     ld_num = request.query_params.get('ld_num')
     print("################################ 模拟器【", ld_num, "】初始化卡牌 ")
     try:
@@ -64,7 +65,7 @@ async def init_cards(request: Request):
 
 
 @portal.get('/poke/handle_others')
-async def handle_others(request: Request):
+def handle_others(request: Request):
     ld_num = request.query_params.get('ld_num')
     nick = ""
     try:
@@ -97,7 +98,7 @@ async def handle_others(request: Request):
 
 
 @portal.get('/poke/replay')
-async def prepare_start(request: Request):
+def prepare_start(request: Request):
     ld_num = request.query_params.get('ld_num')
     try:
         if ld_num in douFacadeAry:
@@ -113,7 +114,7 @@ async def prepare_start(request: Request):
 
 
 @portal.get('/poke/play')
-async def play_one_poke(request: Request):
+def play_one_poke(request: Request):
     ld_num = request.query_params.get('ld_num')
     try:
         user_position_code = request.query_params.get('user_position_code')
@@ -144,7 +145,7 @@ async def play_one_poke(request: Request):
 
 
 @portal.get('/poke/judge_if_mingpai')
-async def judge_if_mingpai(request: Request):
+def judge_if_mingpai(request: Request):
     ld_num = request.query_params.get('ld_num')
     try:
         user_position_code = request.query_params.get('user_position_code')
@@ -165,7 +166,8 @@ async def judge_if_mingpai(request: Request):
 
 
 @portal.get('/poke/judge_if_jiaodizhu')
-async def judge_if_jiaodizhu(request: Request):
+def judge_if_jiaodizhu(request: Request):
+    start_time = time.time()
     ld_num = request.query_params.get('ld_num')
     try:
         user_position_code = request.query_params.get('user_position_code')
@@ -177,6 +179,7 @@ async def judge_if_jiaodizhu(request: Request):
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
         result = dou_facade_inst.judge_if_jiaodizhu(cards_str, jiao_dizhu_type)
+        print("叫地主花费的时间花费的时间：", str(time.time() - start_time))
         return JSONResponse({'user_position_code': user_position_code, 'result': result.get("result"), 'landlord_score': result.get("landlord_score"), 'farmer_score': result.get("farmer_score"), 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
@@ -185,7 +188,8 @@ async def judge_if_jiaodizhu(request: Request):
 
 
 @portal.get('/poke/eval_poke_score')
-async def eval_poke_score(request: Request):
+def eval_poke_score(request: Request):
+    start_time = time.time()
     ld_num = request.query_params.get('ld_num')
     try:
         user_position_code = request.query_params.get('user_position_code')
@@ -198,6 +202,9 @@ async def eval_poke_score(request: Request):
             raise Exception("dou_facde_inst 尚未初始化!", ld_num)
 
         result = dou_facade_inst.eval_poke_score(cards_str, three_cards, user_position_code, is_farmer)
+        end_time = time.time()
+        int_time = (end_time - start_time)
+        print("eval_poke_score计算花费的时间：", str(int_time))
         return JSONResponse({'user_position_code': user_position_code, 'win_rate': result, 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())
@@ -206,7 +213,7 @@ async def eval_poke_score(request: Request):
 
 
 @portal.get('/poke/judge_if_jiabei')
-async def judge_if_jiabei(request: Request):
+def judge_if_jiabei(request: Request):
     ld_num = request.query_params.get('ld_num')
     try:
         user_position_code = request.query_params.get('user_position_code')
@@ -229,7 +236,7 @@ async def judge_if_jiabei(request: Request):
 
 
 @portal.get('/poke/reset_hands_cards')
-async def reset_hands_cards(request: Request):
+def reset_hands_cards(request: Request):
     ld_num = request.query_params.get('ld_num')
     print("ld_num", ld_num)
     try:
@@ -250,7 +257,7 @@ async def reset_hands_cards(request: Request):
 
 
 @portal.get('/poke/init_ai_model')
-async def init_ai_model(request: Request):
+def init_ai_model(request: Request):
     ld_num = request.query_params.get('ld_num')
     try:
         model_type = request.query_params.get('model_type')
@@ -289,7 +296,6 @@ if __name__ == '__main__':
         # 改变标准输出的默认编码
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
         colorama.init(autoreset=True)
-
         uvicorn.run(app='portal:portal', host="127.0.0.1", port=port, reload=True, limit_concurrency=500)
 
     except Exception as e:
