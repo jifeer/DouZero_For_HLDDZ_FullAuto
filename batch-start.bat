@@ -13,6 +13,6 @@ echo 已获取管理员权限
 chcp 65001
 D:
 D:\e-projects\DouZero_For_HLDDZ_FullAuto
-start python portal.py  1
-start python portal.py  2
-start python portal.py  3
+start "模拟器-1" cmd /k python portal.py  1
+start "模拟器-2" cmd /k python portal.py  2
+start "模拟器-3" cmd /k python portal.py  3

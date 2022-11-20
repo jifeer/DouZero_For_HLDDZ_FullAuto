@@ -13,5 +13,5 @@ print(other_played_cards_real != "DX" or len(other_played_cards_real) == 4 and l
 # not > and >or
 
 for i in range(28):
-    print("start python portal.py ", i)
+    print("start " + "\"模拟器-" + str(i) + "\" cmd /k python portal.py ", i)
 
