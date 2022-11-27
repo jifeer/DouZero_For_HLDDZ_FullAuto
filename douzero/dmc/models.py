@@ -325,9 +325,6 @@ class ResnetModel(nn.Module):
             return dict(action=action, max_value=torch.max(out))
 
 
-
-
-
 class BidModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -364,7 +361,6 @@ class BidModel(nn.Module):
             else:
                 action = torch.argmax(x,dim=0)[0]
             return dict(action=action, max_value=torch.max(x))
-
 
 # Model dict is only used in evaluation but not training
 model_dict = {}
@@ -422,6 +418,7 @@ class General_Model:
 
     def get_models(self):
         return self.models
+
 
 class OldModel:
     """
