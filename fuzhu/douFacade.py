@@ -340,11 +340,10 @@ class DouFacade(object):
             win_rate = action_message["win_rate"] if action_message["win_rate"] else 0
             res = {"action": play, "win_rate": round(win_rate, 3), "hands_pokes": self.card_play_data_list[self.user_position] }
             self.GameRecord.append(action_message["action"] if action_message["action"] != "" else "Pass")
-            print("剩余手牌：", self.card_play_data_list[self.user_position])
+            print("出牌：", play, "胜率", win_rate, "剩余手牌：", self.card_play_data_list[self.user_position])
             return res
         else:
             return {"action": "Pass", "win_rate": 0.99, "msg": "手牌为【】"}
-
 
     def eval_poke_score(self, cards_str, three_cards, user_position_code, is_farmer):
         if is_farmer == "0":
