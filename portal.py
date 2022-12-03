@@ -291,7 +291,7 @@ if __name__ == '__main__':
             print("18000 + monitorId ")
             port = int(18000) + monitorId
         else:
-            port = 18001
+            port = 18002
         print(" port is %d", port)
         # 改变标准输出的默认编码
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')

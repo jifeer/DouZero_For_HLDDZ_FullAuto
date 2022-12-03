@@ -136,11 +136,11 @@ class DouFacade(object):
 
     def init_ai_model(self, _model_type):
         # 地主model初始化
-        if _model_type == "resnet":
+        if _model_type.lower() == "resnet":
             LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
-        elif _model_type == "wp":
+        elif _model_type.lower() == "wp":
             LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
-        elif _model_type == "adp":
+        elif _model_type.lower() == "adp":
             LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
         else:
             LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
@@ -209,7 +209,7 @@ class DouFacade(object):
                 self.other_hand_cards[0:17] if (self.user_position_code + 1) % 3 == 1 else self.other_hand_cards[17:]
         })
 
-        # 地主model初始化
+        # 地主model初始化, 已經單獨初始化了
         self.init_ai_model(_model_type)
 
         # AI 初始化

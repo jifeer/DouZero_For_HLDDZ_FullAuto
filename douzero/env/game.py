@@ -3,7 +3,8 @@ from . import move_detector as md, move_selector as ms
 from .move_generator import MovesGener
 from fuzhu.search_utility import search_actions, select_optimal_path, check_42
 import numpy as np
-
+import logging
+import traceback
 EnvCard2RealCard = {3: '3', 4: '4', 5: '5', 6: '6', 7: '7',
                     8: '8', 9: '9', 10: 'T', 11: 'J', 12: 'Q',
                     13: 'K', 14: 'A', 17: '2', 20: 'X', 30: 'D'}
@@ -198,9 +199,11 @@ class GameEnv(object):
 
         self.card_play_action_seq.append((position, action))
         self.update_acting_player_hand_cards(action)
-
-        self.played_cards[self.acting_player_position] += action
-
+        try:
+            self.played_cards[self.acting_player_position] += action
+        except Exception as e:
+            res = "Error {0}".format(traceback.format_exc())
+            logging.error(f"######模拟器【], error info: {res}")
         if self.acting_player_position == 'landlord' and \
                 len(action) > 0 and \
                 len(self.three_landlord_cards) > 0:
