@@ -58,6 +58,7 @@ def manual_mingpai_requirements(cards_str):
     else:
         return False
 
+
 def new_dou_zero():
     return DouFacade()
 
@@ -99,21 +100,7 @@ class DouFacade(object):
         self.initial_multiply = ""
         # -------------------
         self.shouldExit = 0  # 通知上一轮记牌结束
-        self.card_play_resnet_path_dict = {
-            'landlord': web_global.resnet_path + "resnet_landlord.ckpt",
-            'landlord_up': web_global.resnet_path + "resnet_landlord_up.ckpt",
-            'landlord_down': web_global.resnet_path + "resnet_landlord_down.ckpt"
-        }
-        self.card_play_wp_model_path = {
-            'landlord': web_global.wp_path + "landlord.ckpt",
-            'landlord_up': web_global.wp_path + "landlord_up.ckpt",
-            'landlord_down': web_global.wp_path + "landlord_down.ckpt"
-        }
-        self.card_play_adp_model_path = {
-            'landlord': web_global.adp_path + "landlord.ckpt",
-            'landlord_up': web_global.adp_path + "landlord_up.ckpt",
-            'landlord_down': web_global.adp_path + "landlord_down.ckpt"
-        }
+
         # others
         self.other_played_cards_real = ""
         self.other_played_cards_env = []
@@ -133,18 +120,46 @@ class DouFacade(object):
         self.user_position = ['landlord_up', 'landlord', 'landlord_down'][self.user_position_code]
         self.play_order_queue = None  # 创建 Queue 队列
         self.is_start = False
+        self.has_inited = False
 
-    def init_ai_model(self, _model_type):
+    def init_ai_model(self, _model_type, is_reset, is_call_landlord):
         # 地主model初始化
-        if _model_type.lower() == "resnet":
-            LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
-        elif _model_type.lower() == "wp":
-            LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
-        elif _model_type.lower() == "adp":
-            LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
-        else:
-            LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
+        if not self.has_inited and is_call_landlord == 1:
+            if _model_type.lower() == "resnet":
+                LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
+            elif _model_type.lower() == "wp":
+                LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
+            elif _model_type.lower() == "adp":
+                LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
+            else:
+                LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
+            self.has_inited = True
+        if is_reset == 1:
+            if _model_type.lower() == "resnet":
+                LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
+            elif _model_type.lower() == "wp":
+                LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
+            elif _model_type.lower() == "adp":
+                LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
+            else:
+                LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
         return 1
+
+    def init_ai_players(self, model_type, user_position):
+        if model_type == "resnet":
+            # self.user_position = ['landlord_up', 'landlord', 'landlord_down']
+            ai_players = [user_position,
+                          DeepAgent(user_position, web_global.card_play_resnet_path_dict[user_position])]
+        elif model_type == "wp":
+            ai_players = [user_position,
+                          DeepAgent(user_position, web_global.card_play_wp_model_path[user_position])]
+        elif model_type == "adp":
+            ai_players = [user_position,
+                          DeepAgent(user_position, web_global.card_play_adp_model_path[user_position])]
+        else:
+            ai_players = [user_position,
+                          DeepAgent(user_position, web_global.card_play_resnet_path_dict[user_position])]
+        return ai_players
 
     def init_cards(self, _user_hand_cards_real, _three_landlord_cards_real, _user_position_code, _model_type):
         self.model_type = _model_type
@@ -210,24 +225,12 @@ class DouFacade(object):
         })
 
         # 地主model初始化, 已經單獨初始化了
-        self.init_ai_model(_model_type)
+        # self.init_ai_model(_model_type)
 
         # AI 初始化
         self.play_order = 0 if self.user_position == "landlord" else 1 if self.user_position == "landlord_up" else 2
         self.LastValidPlayPos = self.play_order
-        if self.model_type == "resnet":
-            ai_players = [self.user_position,
-                          DeepAgent(self.user_position, self.card_play_resnet_path_dict[self.user_position])]
-        elif self.model_type == "wp":
-            ai_players = [self.user_position,
-                          DeepAgent(self.user_position, self.card_play_wp_model_path[self.user_position])]
-        elif self.model_type == "adp":
-            ai_players = [self.user_position,
-                          DeepAgent(self.user_position, self.card_play_adp_model_path[self.user_position])]
-        else:
-            ai_players = [self.user_position,
-                          DeepAgent(self.user_position, self.card_play_resnet_path_dict[self.user_position])]
-
+        ai_players = self.init_ai_players(self.model_type, self.user_position)
         self.env = GameEnv(ai_players, None)
         # print("info: " + self.card_play_data_tostr(self.card_play_data_list))
         return 1
@@ -338,7 +341,8 @@ class DouFacade(object):
             # print("计算出牌花费的时间：", str(int_time))
             play = action_message["action"] if action_message["action"] else "Pass"
             win_rate = action_message["win_rate"] if action_message["win_rate"] else 0
-            res = {"action": play, "win_rate": round(win_rate, 3), "hands_pokes": self.card_play_data_list[self.user_position] }
+            res = {"action": play, "win_rate": round(win_rate, 3),
+                   "hands_pokes": self.card_play_data_list[self.user_position]}
             self.GameRecord.append(action_message["action"] if action_message["action"] != "" else "Pass")
             print("出牌：", play, "胜率", win_rate, "剩余手牌：", self.card_play_data_list[self.user_position])
             return res
@@ -461,4 +465,3 @@ class DouFacade(object):
 
 if __name__ == "__main__":
     print("only a test")
-

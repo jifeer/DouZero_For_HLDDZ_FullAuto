@@ -263,7 +263,7 @@ def init_ai_model(request: Request):
         model_type = request.query_params.get('model_type')
         dou_facade_inst = DouFacade()
         douFacadeAry[ld_num] = dou_facade_inst
-        result = dou_facade_inst.init_ai_model(model_type)
+        result = dou_facade_inst.init_ai_model(model_type, 0, 0)
         return JSONResponse({'result': result, 'code': 0})
     except Exception as e:
         msg = "Error {0}".format(traceback.format_exc())

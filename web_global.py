@@ -19,3 +19,19 @@ JiabeiThreshold = (
 )
 FarmerJiabeiThreshold = (6, 1.2)
 MingpaiThreshold = 0.93
+
+card_play_resnet_path_dict = {
+    'landlord': resnet_path + "resnet_landlord.ckpt",
+    'landlord_up': resnet_path + "resnet_landlord_up.ckpt",
+    'landlord_down': resnet_path + "resnet_landlord_down.ckpt"
+}
+card_play_wp_model_path = {
+    'landlord': wp_path + "landlord.ckpt",
+    'landlord_up': wp_path + "landlord_up.ckpt",
+    'landlord_down': wp_path + "landlord_down.ckpt"
+}
+card_play_adp_model_path = {
+    'landlord': adp_path + "landlord.ckpt",
+    'landlord_up': adp_path + "landlord_up.ckpt",
+    'landlord_down': adp_path + "landlord_down.ckpt"
+}

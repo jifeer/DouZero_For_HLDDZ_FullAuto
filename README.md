@@ -58,12 +58,12 @@ cmd中敲命令：python -m ensurepip
 
 ## GPU 安装
 ### nvidia 11.8
-
 1. cuda环境安装： https://blog.csdn.net/m0_45447650/article/details/123704930
-   1. 设置path
-      1. 
+   1. 设置path, 执行setEnvParams.bat
 2. cudnn下载部署： cudnn-windows-x86_64-8.5.0.96_cuda11-archive
-   pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+3. 
+   1. pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+   2. pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
 ## 基础环境安装
 1. pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
