@@ -13,6 +13,7 @@ echo 已获取管理员权限
 
 :: TODO:设置MC平台环境变量
 color 02
+:: 解压pathon文件目录创建
 
 ::设置CUDA/path的安装路径
 set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8
@@ -45,3 +46,8 @@ set ENV_PATH=%PATH%
 ::设置虚拟内存到D盘，大小为1024-1024，并且删除C盘pagefile.sys'
 wmic PageFileSet create name="D:\\pagefile.sys",InitialSize="50000",MaximumSize="80000"
 wmic PageFileSet where "name='C:\\pagefile.sys'" delete
+
+cd d:
+d:
+mkdir d:/
+start winrar x 要解压的压缩文件 [要解压的文件] 解压目录

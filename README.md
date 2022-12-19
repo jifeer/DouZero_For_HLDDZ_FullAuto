@@ -61,6 +61,8 @@ cmd中敲命令：python -m ensurepip
 1. cuda环境安装： https://blog.csdn.net/m0_45447650/article/details/123704930
    1. 设置path, 执行setEnvParams.bat
 2. cudnn下载部署： cudnn-windows-x86_64-8.5.0.96_cuda11-archive
+   解压释放到C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8目录下
+
 3. 
    1. pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
    2. pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116

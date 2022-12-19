@@ -100,7 +100,9 @@ class DouFacade(object):
         self.initial_multiply = ""
         # -------------------
         self.shouldExit = 0  # 通知上一轮记牌结束
-
+        self.card_play_resnet_path_dict = web_global.card_play_resnet_path_dict
+        self.card_play_wp_model_path = web_global.card_play_wp_model_path
+        self.card_play_adp_model_path = web_global.card_play_adp_model_path
         # others
         self.other_played_cards_real = ""
         self.other_played_cards_env = []
@@ -124,25 +126,25 @@ class DouFacade(object):
 
     def init_ai_model(self, _model_type, is_reset, is_call_landlord):
         # 地主model初始化
-        if not self.has_inited and is_call_landlord == 1:
-            if _model_type.lower() == "resnet":
-                LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
-            elif _model_type.lower() == "wp":
-                LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
-            elif _model_type.lower() == "adp":
-                LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
-            else:
-                LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
-            self.has_inited = True
-        if is_reset == 1:
-            if _model_type.lower() == "resnet":
-                LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
-            elif _model_type.lower() == "wp":
-                LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
-            elif _model_type.lower() == "adp":
-                LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
-            else:
-                LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
+        # if not self.has_inited and is_call_landlord == 1:
+        #     if _model_type.lower() == "resnet":
+        #         LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
+        #     elif _model_type.lower() == "wp":
+        #         LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
+        #     elif _model_type.lower() == "adp":
+        #         LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
+        #     else:
+        #         LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
+        #     self.has_inited = True
+        #  if is_reset == 1:
+        if _model_type.lower() == "resnet":
+            LandlordModel.init_model(web_global.resnet_path + "resnet_landlord.ckpt")
+        elif _model_type.lower() == "wp":
+            LandlordModel.init_model(web_global.wp_path + "landlord.ckpt")
+        elif _model_type.lower() == "adp":
+            LandlordModel.init_model(web_global.adp_path + "landlord.ckpt")
+        else:
+            LandlordModel.init_model(web_global.sl_path + "landlord.ckpt")
         return 1
 
     def init_ai_players(self, model_type, user_position):
@@ -225,7 +227,7 @@ class DouFacade(object):
         })
 
         # 地主model初始化, 已經單獨初始化了
-        # self.init_ai_model(_model_type)
+        self.init_ai_model(_model_type, 0, 1)
 
         # AI 初始化
         self.play_order = 0 if self.user_position == "landlord" else 1 if self.user_position == "landlord_up" else 2
